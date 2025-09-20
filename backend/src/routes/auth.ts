@@ -31,7 +31,7 @@ router.post('/register', async (req, res) => {
       data: {
         email,
         name,
-        // password: hashedPassword, // Prisma 스키마에 password 필드 추가 필요
+        password: hashedPassword,
       },
       select: {
         id: true,
@@ -69,15 +69,15 @@ router.post('/login', async (req, res) => {
       where: { email }
     });
 
-    if (!user) {
+    if (!user || !user.password) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // 비밀번호 확인 (실제 구현시 해시된 비밀번호와 비교)
-    // const isValid = await bcrypt.compare(password, user.password);
-    // if (!isValid) {
-    //   return res.status(401).json({ error: 'Invalid credentials' });
-    // }
+    // 비밀번호 확인
+    const isValid = await bcrypt.compare(password, user.password);
+    if (!isValid) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
 
     // JWT 토큰 생성
     const token = jwt.sign(

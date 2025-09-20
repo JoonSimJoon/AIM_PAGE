@@ -8,6 +8,7 @@ help:
 	@echo "  make setup        - 프로젝트 초기 설정"
 	@echo "  make dev          - 로컬 개발 서버 실행"
 	@echo "  make dev-docker   - Docker로 개발 서버 실행"
+	@echo "  make staging      - Supabase 스테이징 환경 실행"
 	@echo "  make prod         - 프로덕션 배포"
 	@echo "  make logs         - Docker 로그 보기"
 	@echo "  make clean        - Docker 정리"
@@ -37,6 +38,16 @@ dev-docker:
 dev-docker-bg:
 	@echo "🐳 Docker 개발 환경 백그라운드 실행 중..."
 	@docker-compose -f docker/dev/docker-compose.yml up --build -d
+
+# Supabase 스테이징 환경
+staging:
+	@echo "🚀 스테이징 환경 (Supabase) 실행 중..."
+	@docker-compose -f docker/staging/docker-compose.yml up --build
+
+# Supabase 스테이징 환경 (백그라운드)
+staging-bg:
+	@echo "🚀 스테이징 환경 (Supabase) 백그라운드 실행 중..."
+	@docker-compose -f docker/staging/docker-compose.yml up --build -d
 
 # 프로덕션 배포
 prod:

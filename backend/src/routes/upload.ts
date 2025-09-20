@@ -1,7 +1,11 @@
 import express from 'express';
-import { generatePresignedUrl, generateS3Key, copyS3Object } from '../utils/s3';
+import multer from 'multer';
+import { localStorage } from '../utils/storage';
 
 const router = express.Router();
+
+// Multer 설정 (메모리 스토리지)
+const upload = multer({ storage: multer.memoryStorage() });
 
 // JWT 미들웨어 (간단한 버전)
 const authenticateToken = (req: any, res: any, next: any) => {
@@ -21,44 +25,58 @@ const authenticateToken = (req: any, res: any, next: any) => {
   }
 };
 
-// 업로드 URL 생성
-router.post('/url', authenticateToken, async (req: any, res) => {
+// 파일 업로드 (로컬 스토리지)
+router.post('/file', authenticateToken, upload.single('file'), async (req: any, res) => {
   try {
-    const { target, postId, mime, ext } = req.body;
-    
-    if (!mime || !ext) {
-      return res.status(400).json({ error: 'Missing mime type or extension' });
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
     }
 
+    const { target = 'post' } = req.body;
     const userId = req.user.userId;
-    const cleanExt = ext.replace('.', '');
     
-    // S3 키 결정
-    const key = generateS3Key(userId, target, postId, cleanExt);
-    const isTemp = key.includes('/temp/');
+    // 파일 키 생성
+    const key = localStorage.generateUploadUrl(
+      target as 'avatar' | 'post' | 'activity',
+      userId,
+      req.file.originalname
+    );
     
-    const url = await generatePresignedUrl(key, mime, isTemp);
+    // 파일 저장
+    await localStorage.saveFile(key, req.file.buffer);
+    
+    // 파일 URL 생성
+    const url = localStorage.getFileUrl(key);
 
-    res.json({ url, key });
+    res.json({ 
+      success: true, 
+      key, 
+      url,
+      filename: req.file.originalname,
+      size: req.file.size,
+      mimetype: req.file.mimetype
+    });
   } catch (error) {
-    console.error('Upload URL generation error:', error);
+    console.error('File upload error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// S3 객체 복사 (임시 -> 영구)
-router.post('/copy', authenticateToken, async (req, res) => {
+// 파일 삭제
+router.delete('/:key', authenticateToken, async (req: any, res) => {
   try {
-    const { fromKey, toKey } = req.body;
+    const { key } = req.params;
+    const decodedKey = decodeURIComponent(key);
     
-    if (!fromKey || !toKey) {
-      return res.status(400).json({ error: 'Missing source or destination key' });
+    const deleted = await localStorage.deleteFile(decodedKey);
+    
+    if (deleted) {
+      res.json({ success: true });
+    } else {
+      res.status(404).json({ error: 'File not found' });
     }
-
-    await copyS3Object(fromKey, toKey);
-    res.json({ success: true });
   } catch (error) {
-    console.error('S3 copy error:', error);
+    console.error('File deletion error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
