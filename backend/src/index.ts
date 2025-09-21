@@ -11,6 +11,7 @@ import uploadRoutes from './routes/upload';
 import studiesRoutes from './routes/studies';
 import activitiesRoutes from './routes/activities';
 import membersRoutes from './routes/members';
+import contentRoutes from './routes/content';
 
 dotenv.config();
 
@@ -37,6 +38,7 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/studies', studiesRoutes);
 app.use('/api/activities', activitiesRoutes);
 app.use('/api/members', membersRoutes);
+app.use('/api/content', contentRoutes);
 
 // 헬스체크
 app.get('/health', (req, res) => {

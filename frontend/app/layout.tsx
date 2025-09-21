@@ -5,8 +5,24 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: '동아리 웹사이트',
-  description: '동아리 외부 홍보 및 내부 부원 관리/활동 공유',
+  title: 'AIM: AI Monsters',
+  description: 'AIM (AI Monsters) - 국민대학교 AI와 머신러닝 동아리. 함께 코딩하고, 학습하며, 세상을 바꿀 AI 프로젝트를 만들어갑니다.',
+  icons: {
+    icon: [
+      { url: '/images/favicons/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/images/favicons/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/images/favicons/favicon-96x96.png', sizes: '96x96', type: 'image/png' },
+      { url: '/images/favicons/favicon.ico', sizes: 'any' }
+    ],
+    shortcut: '/images/favicons/favicon.ico',
+    apple: '/images/favicons/favicon-96x96.png'
+  },
+  openGraph: {
+    title: 'AIM: AI Monsters',
+    description: 'AIM (AI Monsters) - 국민대학교 AI와 머신러닝 동아리',
+    type: 'website',
+    locale: 'ko_KR'
+  }
 }
 
 export default function RootLayout({
@@ -17,9 +33,7 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body className={inter.className}>
-        <div className="min-h-screen bg-background">
-          {children}
-        </div>
+        {children}
       </body>
     </html>
   )

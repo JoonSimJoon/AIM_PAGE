@@ -7,6 +7,9 @@ export default function HomePage() {
   const [user, setUser] = useState<any>(null)
 
   useEffect(() => {
+    // 페이지 제목 설정
+    document.title = 'AIM: AI Monsters - 국민대학교 AI 동아리'
+    
     // 로그인 상태 확인
     const storedUser = localStorage.getItem('user')
     if (storedUser) {
@@ -23,7 +26,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-black">
       {/* 네비게이션 */}
-      <nav className="bg-black border-b border-gray-800">
+      <nav className="sticky top-0 z-50 bg-black border-b border-gray-800 backdrop-blur-sm bg-opacity-95">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
@@ -49,6 +52,9 @@ export default function HomePage() {
               </Link>
               <Link href="/studies" className="text-gray-300 hover:text-cyan-400 transition-colors">
                 스터디
+              </Link>
+              <Link href="/recruit" className="text-gray-300 hover:text-cyan-400 transition-colors">
+                모집
               </Link>
               {user ? (
                 <div className="flex items-center space-x-3">
@@ -193,20 +199,20 @@ export default function HomePage() {
               AI와 머신러닝의 괴물이 되어 여러분의 무한한 가능성을 발견하고<br />
               함께하는 Monster들과 세상을 바꿔보세요
             </p>
-            <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <Link 
-                href="/register" 
-                className="bg-white text-black px-8 py-4 rounded-xl text-lg font-semibold hover:shadow-lg hover:shadow-white/25 transform hover:-translate-y-1 transition-all duration-300"
-              >
-                지금 가입하기
-              </Link>
-              <Link 
-                href="/studies" 
-                className="border-2 border-white text-white px-8 py-4 rounded-xl text-lg font-semibold hover:bg-white hover:text-black transition-all duration-300"
-              >
-                스터디 둘러보기
-              </Link>
-            </div>
+                   <div className="flex flex-col sm:flex-row justify-center gap-4">
+                     <Link
+                       href="/recruit"
+                       className="bg-white text-black px-8 py-4 rounded-xl text-lg font-semibold hover:shadow-lg hover:shadow-white/25 transform hover:-translate-y-1 transition-all duration-300"
+                     >
+                       모집 공고 보기
+                     </Link>
+                     <Link
+                       href="/about"
+                       className="border-2 border-white text-white px-8 py-4 rounded-xl text-lg font-semibold hover:bg-white hover:text-black transition-all duration-300"
+                     >
+                       동아리 알아보기
+                     </Link>
+                   </div>
           </div>
         </section>
       </main>

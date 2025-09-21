@@ -1,33 +1,91 @@
+'use client'
+
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 
 export default function AboutPage() {
+  const [user, setUser] = useState<any>(null)
+
+  useEffect(() => {
+    // 페이지 제목 설정
+    document.title = 'About - AIM: AI Monsters'
+    
+    const storedUser = localStorage.getItem('user')
+    if (storedUser) {
+      setUser(JSON.parse(storedUser))
+    }
+  }, [])
+
+  const handleLogout = () => {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    setUser(null)
+    alert('로그아웃되었습니다.')
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-black">
       {/* 네비게이션 */}
-      <nav className="bg-white shadow-sm">
+      <nav className="sticky top-0 z-50 bg-black border-b border-gray-800 backdrop-blur-sm bg-opacity-95">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <Link href="/" className="text-xl font-bold text-gray-900">
-                AIM 동아리
+              <Link href="/" className="flex items-center space-x-3">
+                <img 
+                  src="/images/aim_logo.png" 
+                  alt="AIM 로고" 
+                  className="h-8 w-auto object-contain"
+                />
+                <span className="text-xl font-bold text-white">AIM</span>
+                <span className="text-sm text-gray-400 ml-1">AI Monsters</span>
               </Link>
             </div>
             <div className="flex items-center space-x-4">
-              <Link href="/about" className="text-blue-600 font-medium">
+              <Link href="/about" className="text-cyan-400 font-medium">
                 소개
               </Link>
-              <Link href="/members" className="text-gray-700 hover:text-gray-900">
+              <Link href="/members" className="text-gray-300 hover:text-cyan-400 transition-colors">
                 부원
               </Link>
-              <Link href="/activities" className="text-gray-700 hover:text-gray-900">
+              <Link href="/activities" className="text-gray-300 hover:text-cyan-400 transition-colors">
                 활동
               </Link>
-              <Link href="/studies" className="text-gray-700 hover:text-gray-900">
+              <Link href="/studies" className="text-gray-300 hover:text-cyan-400 transition-colors">
                 스터디
               </Link>
-              <Link href="/login" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
-                로그인
+              <Link href="/recruit" className="text-gray-300 hover:text-cyan-400 transition-colors">
+                모집
               </Link>
+              {user ? (
+                <div className="flex items-center space-x-3">
+                  {user.role === 'admin' && (
+                    <Link
+                      href="/admin"
+                      className="bg-pink-600 text-white px-3 py-2 rounded-md hover:bg-pink-700 text-sm"
+                    >
+                      🛠️ 관리자
+                    </Link>
+                  )}
+                  <span className="text-white">
+                    안녕하세요, {user.name}님
+                    {user.role === 'admin' && (
+                      <span className="ml-1 text-xs bg-pink-600 text-white px-2 py-1 rounded">
+                        관리자
+                      </span>
+                    )}
+                  </span>
+                  <button
+                    onClick={handleLogout}
+                    className="bg-gray-700 text-white px-4 py-2 rounded-md hover:bg-gray-600 border border-gray-600"
+                  >
+                    로그아웃
+                  </button>
+                </div>
+              ) : (
+                <Link href="/login" className="bg-cyan-500 text-black px-4 py-2 rounded-md hover:bg-cyan-400 font-semibold">
+                  로그인
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -35,17 +93,22 @@ export default function AboutPage() {
 
       {/* 메인 컨텐츠 */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-white rounded-lg shadow-md p-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8">AIM 동아리 소개</h1>
+        <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-8">
+          <h1 className="text-3xl font-bold text-white mb-8">
+            <span className="bg-gradient-to-r from-cyan-400 to-pink-500 bg-clip-text text-transparent">
+              AIM (AI Monsters)
+            </span>{' '}
+            동아리 소개
+          </h1>
           
           {/* 동아리 개요 */}
           <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">우리는 누구인가</h2>
-            <p className="text-gray-700 leading-relaxed mb-4">
-              AIM(Artificial Intelligence & Machine Learning) 동아리는 인공지능과 머신러닝 분야에 
+            <h2 className="text-2xl font-semibold text-white mb-4">우리는 누구인가</h2>
+            <p className="text-gray-300 leading-relaxed mb-4">
+              AIM(AI Monsters)는 인공지능과 머신러닝 분야에 
               관심있는 학생들이 모여 함께 학습하고 성장하는 커뮤니티입니다.
             </p>
-            <p className="text-gray-700 leading-relaxed">
+            <p className="text-gray-300 leading-relaxed">
               이론적 학습부터 실무 프로젝트까지, 다양한 활동을 통해 AI 분야의 전문가로 성장할 수 있도록 
               서로 돕고 격려하는 환경을 만들어가고 있습니다.
             </p>
@@ -53,32 +116,32 @@ export default function AboutPage() {
 
           {/* 활동 내용 */}
           <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">주요 활동</h2>
+            <h2 className="text-2xl font-semibold text-white mb-4">주요 활동</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="border border-gray-200 rounded-lg p-4">
-                <h3 className="font-semibold text-lg mb-2">📚 정기 스터디</h3>
-                <p className="text-gray-700 text-sm">
+              <div className="border border-gray-600 bg-gray-700 rounded-lg p-4 hover:border-cyan-500 transition-colors">
+                <h3 className="font-semibold text-lg mb-2 text-cyan-400">📚 정기 스터디</h3>
+                <p className="text-gray-300 text-sm">
                   매주 정기적으로 AI/ML 관련 주제를 선정하여 스터디를 진행합니다.
                   개별 학습 내용을 발표하고 토론하는 시간을 가집니다.
                 </p>
               </div>
-              <div className="border border-gray-200 rounded-lg p-4">
-                <h3 className="font-semibold text-lg mb-2">🚀 팀 프로젝트</h3>
-                <p className="text-gray-700 text-sm">
+              <div className="border border-gray-600 bg-gray-700 rounded-lg p-4 hover:border-pink-500 transition-colors">
+                <h3 className="font-semibold text-lg mb-2 text-pink-400">🚀 팀 프로젝트</h3>
+                <p className="text-gray-300 text-sm">
                   실무에 적용 가능한 AI 프로젝트를 팀 단위로 진행하여 
                   포트폴리오를 구축하고 실무 경험을 쌓습니다.
                 </p>
               </div>
-              <div className="border border-gray-200 rounded-lg p-4">
-                <h3 className="font-semibold text-lg mb-2">🎤 세미나 & 워크샵</h3>
-                <p className="text-gray-700 text-sm">
+              <div className="border border-gray-600 bg-gray-700 rounded-lg p-4 hover:border-yellow-500 transition-colors">
+                <h3 className="font-semibold text-lg mb-2 text-yellow-400">🎤 세미나 & 워크샵</h3>
+                <p className="text-gray-300 text-sm">
                   외부 전문가 초청 세미나와 최신 기술 트렌드를 공유하는 
                   워크샵을 정기적으로 개최합니다.
                 </p>
               </div>
-              <div className="border border-gray-200 rounded-lg p-4">
-                <h3 className="font-semibold text-lg mb-2">🏆 대회 참가</h3>
-                <p className="text-gray-700 text-sm">
+              <div className="border border-gray-600 bg-gray-700 rounded-lg p-4 hover:border-purple-500 transition-colors">
+                <h3 className="font-semibold text-lg mb-2 text-purple-400">🏆 대회 참가</h3>
+                <p className="text-gray-300 text-sm">
                   AI/ML 관련 대회에 팀 단위로 참가하여 실력을 검증하고 
                   수상 경력을 쌓아갑니다.
                 </p>
@@ -88,27 +151,27 @@ export default function AboutPage() {
 
           {/* 동아리 역사 */}
           <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">동아리 연혁</h2>
+            <h2 className="text-2xl font-semibold text-white mb-4">동아리 연혁</h2>
             <div className="space-y-4">
               <div className="flex">
-                <div className="flex-shrink-0 w-20 text-sm font-medium text-gray-600">2024</div>
+                <div className="flex-shrink-0 w-20 text-sm font-medium text-cyan-400">2024</div>
                 <div>
-                  <h4 className="font-medium">AIM 동아리 웹사이트 구축</h4>
-                  <p className="text-gray-600 text-sm">부원들의 학습 내용과 프로젝트를 공유할 수 있는 플랫폼 구축</p>
+                  <h4 className="font-medium text-white">AIM 동아리 웹사이트 구축</h4>
+                  <p className="text-gray-400 text-sm">부원들의 학습 내용과 프로젝트를 공유할 수 있는 플랫폼 구축</p>
                 </div>
               </div>
               <div className="flex">
-                <div className="flex-shrink-0 w-20 text-sm font-medium text-gray-600">2023</div>
+                <div className="flex-shrink-0 w-20 text-sm font-medium text-cyan-400">2023</div>
                 <div>
-                  <h4 className="font-medium">첫 번째 AI 해커톤 개최</h4>
-                  <p className="text-gray-600 text-sm">동아리 주관으로 AI 주제의 해커톤을 개최하여 많은 참가자들이 모였습니다</p>
+                  <h4 className="font-medium text-white">첫 번째 AI 해커톤 개최</h4>
+                  <p className="text-gray-400 text-sm">동아리 주관으로 AI 주제의 해커톤을 개최하여 많은 참가자들이 모였습니다</p>
                 </div>
               </div>
               <div className="flex">
-                <div className="flex-shrink-0 w-20 text-sm font-medium text-gray-600">2022</div>
+                <div className="flex-shrink-0 w-20 text-sm font-medium text-cyan-400">2022</div>
                 <div>
-                  <h4 className="font-medium">AIM 동아리 설립</h4>
-                  <p className="text-gray-600 text-sm">AI와 머신러닝에 관심있는 학생들이 모여 동아리를 설립했습니다</p>
+                  <h4 className="font-medium text-white">AIM 동아리 설립</h4>
+                  <p className="text-gray-400 text-sm">AI와 머신러닝에 관심있는 학생들이 모여 동아리를 설립했습니다</p>
                 </div>
               </div>
             </div>
@@ -116,12 +179,12 @@ export default function AboutPage() {
 
           {/* 연락처 */}
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">Contact</h2>
-            <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-gray-700">
-                <strong>Email:</strong> aim.club@example.com<br />
-                <strong>GitHub:</strong> github.com/aim-club<br />
-                <strong>Instagram:</strong> @aim_club_official
+            <h2 className="text-2xl font-semibold text-white mb-4">Contact</h2>
+            <div className="bg-gray-700 border border-gray-600 rounded-lg p-4">
+              <p className="text-gray-300">
+                <strong className="text-white">Email:</strong> aim.club@kookmin.ac.kr<br />
+                <strong className="text-white">GitHub:</strong> github.com/aim-monsters<br />
+                <strong className="text-white">Instagram:</strong> @aim_monsters_official
               </p>
             </div>
           </section>

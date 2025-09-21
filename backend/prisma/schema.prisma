@@ -149,6 +149,13 @@ model RecruitNotice {
   endAt           DateTime
   isOpen          Boolean  @default(false)
   externalFormUrl String?
+  // 카드 표시용 구조화된 필드들
+  targetAudience  String?  // 모집 대상 (예: "국민대학교 재학생 (전 학과/학년)")
+  recruitCount    String?  // 모집 인원 (예: "15명 내외")
+  recruitMethod   String?  // 모집 방법 (예: "서류 + 면접")
+  shortDescription String? // 짧은 설명 (카드용)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model MediaAsset {
@@ -170,4 +177,14 @@ model ExternalArticleCache {
   contentMd String?
   images    Json?
   updatedAt DateTime @updatedAt
+}
+
+model PageContent {
+  id          String   @id @default(cuid())
+  page        String   @unique // 'about', 'main-hero', 'main-features' 등
+  title       String?
+  content     Json     // 페이지별 구조화된 데이터
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
