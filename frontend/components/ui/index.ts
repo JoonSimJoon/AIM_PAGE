@@ -5,6 +5,7 @@ export { Badge } from './Badge'
 export { Text, Title, Subtitle } from './Text'
 export { Spinner, Loading } from './Spinner'
 export { FAQ } from './FAQ'
+export { Modal } from './Modal'
 
 // Types
 export type { default as ButtonProps } from './Button'

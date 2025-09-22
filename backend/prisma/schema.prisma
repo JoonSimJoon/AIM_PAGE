@@ -188,3 +188,57 @@ model PageContent {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+model AboutContent {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AboutSection {
+  id        String   @id @default(cuid())
+  type      String   // 'intro', 'activity', 'history', 'contact'
+  title     String
+  content   String
+  order     Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AboutActivity {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  icon        String   // 이모지나 아이콘
+  color       String   // 색상 클래스
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AboutHistory {
+  id          String   @id @default(cuid())
+  year        Int
+  title       String
+  description String
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AboutContact {
+  id        String   @id @default(cuid())
+  type      String   // 'email', 'github', 'instagram', etc.
+  label     String
+  value     String
+  order     Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

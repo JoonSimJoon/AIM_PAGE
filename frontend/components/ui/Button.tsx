@@ -7,6 +7,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean
   fullWidth?: boolean
   children: React.ReactNode
+  [key: string]: any // 추가 props 허용
 }
 
 export const Button: React.FC<ButtonProps> = ({

@@ -1,10 +1,10 @@
 import React from 'react'
 
 interface TextProps extends React.HTMLAttributes<HTMLElement> {
-  as?: 'p' | 'span' | 'div' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
-  variant?: 'primary' | 'secondary' | 'muted' | 'gradient'
-  size?: 'xs' | 'sm' | 'base' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl'
-  weight?: 'normal' | 'medium' | 'semibold' | 'bold'
+  as?: React.ElementType
+  variant?: 'primary' | 'secondary' | 'muted' | 'gradient' | 'error'
+  size?: 'xs' | 'sm' | 'base' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | '6xl'
+  weight?: 'light' | 'normal' | 'medium' | 'semibold' | 'bold' | 'extrabold'
   align?: 'left' | 'center' | 'right'
   children: React.ReactNode
 }
@@ -19,14 +19,15 @@ export const Text: React.FC<TextProps> = ({
   className = '',
   ...props
 }) => {
-  const variants = {
+  const variantClasses = {
     primary: 'text-white',
     secondary: 'text-gray-400',
     muted: 'text-gray-500',
-    gradient: 'bg-gradient-to-r from-cyan-400 to-pink-500 bg-clip-text text-transparent'
+    gradient: 'bg-gradient-to-r from-cyan-400 to-pink-500 bg-clip-text text-transparent',
+    error: 'text-red-500'
   }
   
-  const sizes = {
+  const sizeClasses = {
     xs: 'text-xs',
     sm: 'text-sm',
     base: 'text-base',
@@ -35,23 +36,26 @@ export const Text: React.FC<TextProps> = ({
     '2xl': 'text-2xl',
     '3xl': 'text-3xl',
     '4xl': 'text-4xl',
-    '5xl': 'text-5xl'
+    '5xl': 'text-5xl',
+    '6xl': 'text-6xl',
   }
   
-  const weights = {
+  const weightClasses = {
+    light: 'font-light',
     normal: 'font-normal',
     medium: 'font-medium',
     semibold: 'font-semibold',
-    bold: 'font-bold'
+    bold: 'font-bold',
+    extrabold: 'font-extrabold'
   }
-  
-  const aligns = {
+
+  const alignClasses = {
     left: 'text-left',
     center: 'text-center',
     right: 'text-right'
   }
   
-  const textClasses = `${variants[variant]} ${sizes[size]} ${weights[weight]} ${aligns[align]} ${className}`.trim()
+  const textClasses = `${variantClasses[variant]} ${sizeClasses[size]} ${weightClasses[weight]} ${alignClasses[align]} ${className}`.trim()
   
   return (
     <Component className={textClasses} {...props}>
@@ -66,9 +70,10 @@ export const Title: React.FC<Omit<TextProps, 'as' | 'size' | 'weight'> & { level
   variant = 'primary',
   children,
   className = '',
+  align = 'left',
   ...props
 }) => {
-  const Component = `h${level}` as keyof JSX.IntrinsicElements
+  const Component = `h${level}` as React.ElementType
   const sizes = {
     1: 'text-4xl md:text-5xl',
     2: 'text-3xl md:text-4xl',
@@ -79,12 +84,13 @@ export const Title: React.FC<Omit<TextProps, 'as' | 'size' | 'weight'> & { level
   }
   
   return (
-    <Text
-      as={Component}
-      variant={variant}
-      size="base"
-      weight="bold"
-      className={`${sizes[level]} ${className}`}
+    <Text 
+      as={Component} 
+      variant={variant} 
+      size={sizes[level] as TextProps['size']}
+      weight="bold" 
+      align={align}
+      className={className} 
       {...props}
     >
       {children}
@@ -96,15 +102,16 @@ export const Subtitle: React.FC<Omit<TextProps, 'as' | 'size' | 'weight'>> = ({
   variant = 'secondary',
   children,
   className = '',
+  align = 'left',
   ...props
 }) => {
   return (
-    <Text
-      as="p"
-      variant={variant}
-      size="lg"
-      weight="normal"
-      className={`max-w-3xl mx-auto leading-relaxed ${className}`}
+    <Text 
+      as="p" 
+      variant={variant} 
+      size="xl" 
+      align={align}
+      className={`leading-relaxed ${className}`} 
       {...props}
     >
       {children}

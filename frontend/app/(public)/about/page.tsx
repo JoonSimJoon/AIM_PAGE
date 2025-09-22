@@ -2,9 +2,48 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { Card, Text, Title, Subtitle, Loading } from '@/components/ui'
+
+interface AboutSection {
+  id: string
+  type: string
+  title: string
+  content: string
+  order: number
+}
+
+interface AboutActivity {
+  id: string
+  title: string
+  description: string
+  icon: string
+  color: string
+  order: number
+}
+
+interface AboutHistory {
+  id: string
+  year: number
+  title: string
+  description: string
+  order: number
+}
+
+interface AboutContact {
+  id: string
+  type: string
+  label: string
+  value: string
+  order: number
+}
 
 export default function AboutPage() {
   const [user, setUser] = useState<any>(null)
+  const [sections, setSections] = useState<AboutSection[]>([])
+  const [activities, setActivities] = useState<AboutActivity[]>([])
+  const [history, setHistory] = useState<AboutHistory[]>([])
+  const [contacts, setContacts] = useState<AboutContact[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     // 페이지 제목 설정
@@ -14,13 +53,61 @@ export default function AboutPage() {
     if (storedUser) {
       setUser(JSON.parse(storedUser))
     }
+
+    // 소개 데이터 로드
+    fetchAboutData()
   }, [])
+
+  const fetchAboutData = async () => {
+    try {
+      const [sectionsRes, activitiesRes, historyRes, contactsRes] = await Promise.all([
+        fetch('/api/content/about/sections'),
+        fetch('/api/content/about/activities'),
+        fetch('/api/content/about/history'),
+        fetch('/api/content/about/contact')
+      ])
+
+      if (sectionsRes.ok) {
+        const sectionsData = await sectionsRes.json()
+        setSections(sectionsData)
+      }
+
+      if (activitiesRes.ok) {
+        const activitiesData = await activitiesRes.json()
+        setActivities(activitiesData)
+      }
+
+      if (historyRes.ok) {
+        const historyData = await historyRes.json()
+        setHistory(historyData)
+      }
+
+      if (contactsRes.ok) {
+        const contactsData = await contactsRes.json()
+        setContacts(contactsData)
+      }
+    } catch (error) {
+      console.error('소개 데이터 로드 오류:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleLogout = () => {
     localStorage.removeItem('token')
     localStorage.removeItem('user')
     setUser(null)
     alert('로그아웃되었습니다.')
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black">
+        <div className="flex justify-center items-center h-screen">
+          <Loading text="소개 내용을 불러오는 중..." size="lg" />
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -93,102 +180,85 @@ export default function AboutPage() {
 
       {/* 메인 컨텐츠 */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-8">
-          <h1 className="text-3xl font-bold text-white mb-8">
+        <Card className="p-8">
+          <Title level={1} className="text-white mb-8">
             <span className="bg-gradient-to-r from-cyan-400 to-pink-500 bg-clip-text text-transparent">
               AIM (AI Monsters)
             </span>{' '}
             동아리 소개
-          </h1>
+          </Title>
           
-          {/* 동아리 개요 */}
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-white mb-4">우리는 누구인가</h2>
-            <p className="text-gray-300 leading-relaxed mb-4">
-              AIM(AI Monsters)는 인공지능과 머신러닝 분야에 
-              관심있는 학생들이 모여 함께 학습하고 성장하는 커뮤니티입니다.
-            </p>
-            <p className="text-gray-300 leading-relaxed">
-              이론적 학습부터 실무 프로젝트까지, 다양한 활동을 통해 AI 분야의 전문가로 성장할 수 있도록 
-              서로 돕고 격려하는 환경을 만들어가고 있습니다.
-            </p>
-          </section>
+          {/* 동아리 개요 - DB에서 가져온 섹션들 */}
+          {sections.map((section) => (
+            <section key={section.id} className="mb-8">
+              <Title level={2} className="text-white mb-4">{section.title}</Title>
+              <Text variant="primary" className="leading-relaxed">
+                {section.content}
+              </Text>
+            </section>
+          ))}
 
-          {/* 활동 내용 */}
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-white mb-4">주요 활동</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="border border-gray-600 bg-gray-700 rounded-lg p-4 hover:border-cyan-500 transition-colors">
-                <h3 className="font-semibold text-lg mb-2 text-cyan-400">📚 정기 스터디</h3>
-                <p className="text-gray-300 text-sm">
-                  매주 정기적으로 AI/ML 관련 주제를 선정하여 스터디를 진행합니다.
-                  개별 학습 내용을 발표하고 토론하는 시간을 가집니다.
-                </p>
+          {/* 활동 내용 - DB에서 가져온 활동들 */}
+          {activities.length > 0 && (
+            <section className="mb-8">
+              <Title level={2} className="text-white mb-4">주요 활동</Title>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {activities.map((activity) => (
+                  <Card key={activity.id} className={`border border-gray-600 bg-gray-700 hover:border-${activity.color}-500 transition-colors`}>
+                    <div className="p-4">
+                      <Title level={3} className={`text-lg mb-2 text-${activity.color}-400`}>
+                        {activity.icon} {activity.title}
+                      </Title>
+                      <Text variant="secondary" size="sm">
+                        {activity.description}
+                      </Text>
+                    </div>
+                  </Card>
+                ))}
               </div>
-              <div className="border border-gray-600 bg-gray-700 rounded-lg p-4 hover:border-pink-500 transition-colors">
-                <h3 className="font-semibold text-lg mb-2 text-pink-400">🚀 팀 프로젝트</h3>
-                <p className="text-gray-300 text-sm">
-                  실무에 적용 가능한 AI 프로젝트를 팀 단위로 진행하여 
-                  포트폴리오를 구축하고 실무 경험을 쌓습니다.
-                </p>
-              </div>
-              <div className="border border-gray-600 bg-gray-700 rounded-lg p-4 hover:border-yellow-500 transition-colors">
-                <h3 className="font-semibold text-lg mb-2 text-yellow-400">🎤 세미나 & 워크샵</h3>
-                <p className="text-gray-300 text-sm">
-                  외부 전문가 초청 세미나와 최신 기술 트렌드를 공유하는 
-                  워크샵을 정기적으로 개최합니다.
-                </p>
-              </div>
-              <div className="border border-gray-600 bg-gray-700 rounded-lg p-4 hover:border-purple-500 transition-colors">
-                <h3 className="font-semibold text-lg mb-2 text-purple-400">🏆 대회 참가</h3>
-                <p className="text-gray-300 text-sm">
-                  AI/ML 관련 대회에 팀 단위로 참가하여 실력을 검증하고 
-                  수상 경력을 쌓아갑니다.
-                </p>
-              </div>
-            </div>
-          </section>
+            </section>
+          )}
 
-          {/* 동아리 역사 */}
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-white mb-4">동아리 연혁</h2>
-            <div className="space-y-4">
-              <div className="flex">
-                <div className="flex-shrink-0 w-20 text-sm font-medium text-cyan-400">2024</div>
-                <div>
-                  <h4 className="font-medium text-white">AIM 동아리 웹사이트 구축</h4>
-                  <p className="text-gray-400 text-sm">부원들의 학습 내용과 프로젝트를 공유할 수 있는 플랫폼 구축</p>
-                </div>
+          {/* 동아리 역사 - DB에서 가져온 연혁들 */}
+          {history.length > 0 && (
+            <section className="mb-8">
+              <Title level={2} className="text-white mb-4">동아리 연혁</Title>
+              <div className="space-y-4">
+                {history.map((item) => (
+                  <div key={item.id} className="flex">
+                    <div className="flex-shrink-0 w-20 text-sm font-medium text-cyan-400">
+                      {item.year}
+                    </div>
+                    <div>
+                      <Title level={4} className="text-white">{item.title}</Title>
+                      <Text variant="secondary" size="sm">
+                        {item.description}
+                      </Text>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="flex">
-                <div className="flex-shrink-0 w-20 text-sm font-medium text-cyan-400">2023</div>
-                <div>
-                  <h4 className="font-medium text-white">첫 번째 AI 해커톤 개최</h4>
-                  <p className="text-gray-400 text-sm">동아리 주관으로 AI 주제의 해커톤을 개최하여 많은 참가자들이 모였습니다</p>
-                </div>
-              </div>
-              <div className="flex">
-                <div className="flex-shrink-0 w-20 text-sm font-medium text-cyan-400">2022</div>
-                <div>
-                  <h4 className="font-medium text-white">AIM 동아리 설립</h4>
-                  <p className="text-gray-400 text-sm">AI와 머신러닝에 관심있는 학생들이 모여 동아리를 설립했습니다</p>
-                </div>
-              </div>
-            </div>
-          </section>
+            </section>
+          )}
 
-          {/* 연락처 */}
-          <section>
-            <h2 className="text-2xl font-semibold text-white mb-4">Contact</h2>
-            <div className="bg-gray-700 border border-gray-600 rounded-lg p-4">
-              <p className="text-gray-300">
-                <strong className="text-white">Email:</strong> aim.club@kookmin.ac.kr<br />
-                <strong className="text-white">GitHub:</strong> github.com/aim-monsters<br />
-                <strong className="text-white">Instagram:</strong> @aim_monsters_official
-              </p>
-            </div>
-          </section>
-        </div>
+          {/* 연락처 - DB에서 가져온 연락처들 */}
+          {contacts.length > 0 && (
+            <section>
+              <Title level={2} className="text-white mb-4">Contact</Title>
+              <Card variant="dark" className="p-4">
+                <div className="space-y-2">
+                  {contacts.map((contact) => (
+                    <div key={contact.id}>
+                      <Text variant="primary">
+                        <strong className="text-white">{contact.label}:</strong> {contact.value}
+                      </Text>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            </section>
+          )}
+        </Card>
       </main>
     </div>
   )

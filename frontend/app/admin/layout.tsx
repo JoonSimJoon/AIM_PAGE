@@ -143,6 +143,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   📊 대시보드
                 </Link>
                 <Link
+                  href="/admin/about-management"
+                  className="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-300 hover:bg-gray-800 hover:text-cyan-400 transition-colors"
+                >
+                  ℹ️ 소개 관리
+                </Link>
+                <Link
                   href="/admin/member-management"
                   className="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-300 hover:bg-gray-800 hover:text-cyan-400 transition-colors"
                 >

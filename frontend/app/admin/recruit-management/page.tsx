@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { Button, Card, Text, Title, Subtitle, Loading, Modal } from '@/components/ui'
 
 interface RecruitNotice {
   id: string
@@ -16,21 +17,6 @@ interface RecruitNotice {
   recruitCount?: string
   recruitMethod?: string
   shortDescription?: string
-  createdAt: string
-  updatedAt: string
-}
-
-interface FormData {
-  title: string
-  bodyMd: string
-  startAt: string
-  endAt: string
-  isOpen: boolean
-  externalFormUrl: string
-  targetAudience: string
-  recruitCount: string
-  recruitMethod: string
-  shortDescription: string
 }
 
 export default function RecruitManagementPage() {
@@ -38,27 +24,7 @@ export default function RecruitManagementPage() {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingNotice, setEditingNotice] = useState<RecruitNotice | null>(null)
-  const [initialFormData, setInitialFormData] = useState<FormData | null>(null)
-  const [hasChanges, setHasChanges] = useState(false)
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
-  const [notification, setNotification] = useState<{
-    show: boolean
-    type: 'success' | 'error' | 'warning' | 'info'
-    title: string
-    message?: string
-    onConfirm?: () => void
-    confirmText?: string
-    showCancel?: boolean
-  }>({
-    show: false,
-    type: 'info',
-    title: '',
-    message: '',
-    onConfirm: undefined,
-    confirmText: '확인',
-    showCancel: false
-  })
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState({
     title: '',
     bodyMd: '',
     startAt: '',
@@ -70,54 +36,254 @@ export default function RecruitManagementPage() {
     recruitMethod: '',
     shortDescription: ''
   })
+  const [initialFormData, setInitialFormData] = useState(formData)
+  const [hasChanges, setHasChanges] = useState(false)
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
+  const [notification, setNotification] = useState<{
+    show: boolean
+    type: 'success' | 'error' | 'warning' | 'info'
+    title: string
+    message: string
+    confirmText?: string
+    onConfirm?: () => void
+  }>({
+    show: false,
+    type: 'info',
+    title: '',
+    message: ''
+  })
 
   useEffect(() => {
-    document.title = 'Recruit Management - AIM: AI Monsters'
+    document.title = '모집 공고 관리 - AIM: AI Monsters'
+  }, [])
+
+  useEffect(() => {
     fetchNotices()
   }, [])
 
-  // 폼 데이터 변경 감지
   useEffect(() => {
-    if (initialFormData) {
-      const hasChanged = JSON.stringify(formData) !== JSON.stringify(initialFormData)
-      setHasChanges(hasChanged)
-    }
+    setHasChanges(JSON.stringify(formData) !== JSON.stringify(initialFormData))
   }, [formData, initialFormData])
-
 
   const fetchNotices = async () => {
     try {
-      const token = localStorage.getItem('token')
-      const response = await fetch('http://localhost:3001/api/content/recruit/all', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
+      setLoading(true)
+      console.log('fetchNotices 시작')
+      
+      const response = await fetch('/api/content/recruit/all')
+      console.log('API 요청 완료, 응답 상태:', response.status)
       
       if (response.ok) {
         const data = await response.json()
+        console.log('받은 데이터:', data)
+        console.log('데이터 타입:', typeof data, '배열인가?', Array.isArray(data))
         setNotices(data)
+        console.log('상태 업데이트 완료')
+      } else {
+        const errorText = await response.text()
+        console.error('API 오류:', response.status, response.statusText, errorText)
+        showNotification({
+          show: true,
+          type: 'error',
+          title: '로딩 실패',
+          message: `모집 공고 목록을 불러오는데 실패했습니다. (${response.status}: ${response.statusText})`
+        })
       }
     } catch (error) {
-      console.error('모집 공고 조회 오류:', error)
+      console.error('네트워크 오류:', error)
+      showNotification({
+        show: true,
+        type: 'error',
+        title: '오류',
+        message: '데이터를 불러오는 중 오류가 발생했습니다.'
+      })
     } finally {
       setLoading(false)
+      console.log('fetchNotices 완료')
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (!formData.title.trim() || !formData.bodyMd.trim()) {
-      showNotification('warning', '입력 필수', '제목과 내용을 입력해주세요.')
-      return
-    }
+  const openAddModal = () => {
+    setEditingNotice(null)
+    setFormData({
+      title: '',
+      bodyMd: '',
+      startAt: '',
+      endAt: '',
+      isOpen: true,
+      externalFormUrl: '',
+      targetAudience: '',
+      recruitCount: '',
+      recruitMethod: '',
+      shortDescription: ''
+    })
+    setInitialFormData({
+      title: '',
+      bodyMd: '',
+      startAt: '',
+      endAt: '',
+      isOpen: true,
+      externalFormUrl: '',
+      targetAudience: '',
+      recruitCount: '',
+      recruitMethod: '',
+      shortDescription: ''
+    })
+    setShowModal(true)
+  }
 
+  const closeModal = () => {
+    if (hasChanges) {
+      setShowConfirmDialog(true)
+    } else {
+      setShowModal(false)
+      setEditingNotice(null)
+      setFormData({
+        title: '',
+        bodyMd: '',
+        startAt: '',
+        endAt: '',
+        isOpen: true,
+        externalFormUrl: '',
+        targetAudience: '',
+        recruitCount: '',
+        recruitMethod: '',
+        shortDescription: ''
+      })
+      setInitialFormData({
+        title: '',
+        bodyMd: '',
+        startAt: '',
+        endAt: '',
+        isOpen: true,
+        externalFormUrl: '',
+        targetAudience: '',
+        recruitCount: '',
+        recruitMethod: '',
+        shortDescription: ''
+      })
+    }
+  }
+
+  const saveAndClose = async () => {
+    await handleSubmit()
+    setShowConfirmDialog(false)
+  }
+
+  const cancelClose = () => {
+    setShowConfirmDialog(false)
+  }
+
+  const confirmClose = () => {
+    setShowModal(false)
+    setEditingNotice(null)
+    setFormData({
+      title: '',
+      bodyMd: '',
+      startAt: '',
+      endAt: '',
+      isOpen: true,
+      externalFormUrl: '',
+      targetAudience: '',
+      recruitCount: '',
+      recruitMethod: '',
+      shortDescription: ''
+    })
+    setInitialFormData({
+      title: '',
+      bodyMd: '',
+      startAt: '',
+      endAt: '',
+      isOpen: true,
+      externalFormUrl: '',
+      targetAudience: '',
+      recruitCount: '',
+      recruitMethod: '',
+      shortDescription: ''
+    })
+    setShowConfirmDialog(false)
+  }
+
+  const handleEdit = (notice: RecruitNotice) => {
+    setEditingNotice(notice)
+    setFormData({
+      title: notice.title,
+      bodyMd: notice.bodyMd,
+      startAt: notice.startAt.split('T')[0],
+      endAt: notice.endAt.split('T')[0],
+      isOpen: notice.isOpen,
+      externalFormUrl: notice.externalFormUrl || '',
+      targetAudience: notice.targetAudience || '',
+      recruitCount: notice.recruitCount || '',
+      recruitMethod: notice.recruitMethod || '',
+      shortDescription: notice.shortDescription || ''
+    })
+    setInitialFormData({
+      title: notice.title,
+      bodyMd: notice.bodyMd,
+      startAt: notice.startAt.split('T')[0],
+      endAt: notice.endAt.split('T')[0],
+      isOpen: notice.isOpen,
+      externalFormUrl: notice.externalFormUrl || '',
+      targetAudience: notice.targetAudience || '',
+      recruitCount: notice.recruitCount || '',
+      recruitMethod: notice.recruitMethod || '',
+      shortDescription: notice.shortDescription || ''
+    })
+    setShowModal(true)
+  }
+
+  const handleDelete = async (id: string) => {
+    showNotification({
+      show: true,
+      type: 'warning',
+      title: '삭제 확인',
+      message: '정말로 이 모집 공고를 삭제하시겠습니까?',
+      confirmText: '삭제',
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`/api/content/recruit/${id}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          })
+          
+          if (response.ok) {
+            showNotification({
+              show: true,
+              type: 'success',
+              title: '삭제 완료',
+              message: '모집 공고가 성공적으로 삭제되었습니다.'
+            })
+            fetchNotices()
+          } else {
+            showNotification({
+              show: true,
+              type: 'error',
+              title: '삭제 실패',
+              message: '모집 공고 삭제에 실패했습니다.'
+            })
+          }
+        } catch (error) {
+          showNotification({
+            show: true,
+            type: 'error',
+            title: '오류',
+            message: '삭제 중 오류가 발생했습니다.'
+          })
+        }
+      }
+    })
+  }
+
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
+    
     try {
-      const token = localStorage.getItem('token')
       const url = editingNotice 
-        ? `http://localhost:3001/api/content/recruit/${editingNotice.id}`
-        : 'http://localhost:3001/api/content/recruit'
+        ? `/api/content/recruit/${editingNotice.id}`
+        : '/api/content/recruit'
       
       const method = editingNotice ? 'PUT' : 'POST'
       
@@ -125,16 +291,24 @@ export default function RecruitManagementPage() {
         method,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          ...formData,
+          startAt: new Date(formData.startAt).toISOString(),
+          endAt: new Date(formData.endAt).toISOString()
+        })
       })
-
+      
       if (response.ok) {
+        showNotification({
+          show: true,
+          type: 'success',
+          title: editingNotice ? '수정 완료' : '생성 완료',
+          message: `모집 공고가 성공적으로 ${editingNotice ? '수정' : '생성'}되었습니다.`
+        })
         setShowModal(false)
         setEditingNotice(null)
-        setInitialFormData(null)
-        setHasChanges(false)
         setFormData({
           title: '',
           bodyMd: '',
@@ -147,223 +321,77 @@ export default function RecruitManagementPage() {
           recruitMethod: '',
           shortDescription: ''
         })
+        setInitialFormData({
+          title: '',
+          bodyMd: '',
+          startAt: '',
+          endAt: '',
+          isOpen: true,
+          externalFormUrl: '',
+          targetAudience: '',
+          recruitCount: '',
+          recruitMethod: '',
+          shortDescription: ''
+        })
         fetchNotices()
-        showNotification('success', editingNotice ? '수정 완료' : '작성 완료', 
-          editingNotice ? '모집 공고가 수정되었습니다.' : '모집 공고가 작성되었습니다.')
       } else {
-        showNotification('error', '저장 실패', '저장에 실패했습니다.')
+        showNotification({
+          show: true,
+          type: 'error',
+          title: editingNotice ? '수정 실패' : '생성 실패',
+          message: `모집 공고 ${editingNotice ? '수정' : '생성'}에 실패했습니다.`
+        })
       }
     } catch (error) {
-      console.error('저장 오류:', error)
-      showNotification('error', '오류 발생', '저장 중 오류가 발생했습니다.')
-    }
-  }
-
-  const handleEdit = (notice: RecruitNotice) => {
-    setEditingNotice(notice)
-    const newFormData = {
-      title: notice.title,
-      bodyMd: notice.bodyMd,
-      startAt: new Date(notice.startAt).toISOString().slice(0, 16),
-      endAt: new Date(notice.endAt).toISOString().slice(0, 16),
-      isOpen: notice.isOpen,
-      externalFormUrl: notice.externalFormUrl || '',
-      targetAudience: notice.targetAudience || '',
-      recruitCount: notice.recruitCount || '',
-      recruitMethod: notice.recruitMethod || '',
-      shortDescription: notice.shortDescription || ''
-    }
-    setFormData(newFormData)
-    setInitialFormData(newFormData)
-    setHasChanges(false)
-    setShowModal(true)
-  }
-
-  const handleDelete = async (id: string) => {
-    showNotification('warning', '삭제 확인', '정말 삭제하시겠습니까?', 
-      () => performDelete(id), '삭제', true)
-  }
-
-  const performDelete = async (id: string) => {
-
-    try {
-      const token = localStorage.getItem('token')
-      const response = await fetch(`http://localhost:3001/api/content/recruit/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+      showNotification({
+        show: true,
+        type: 'error',
+        title: '오류',
+        message: '처리 중 오류가 발생했습니다.'
       })
-
-      if (response.ok) {
-        fetchNotices()
-        showNotification('success', '삭제 완료', '모집 공고가 삭제되었습니다.')
-      } else {
-        showNotification('error', '삭제 실패', '삭제에 실패했습니다.')
-      }
-    } catch (error) {
-      console.error('삭제 오류:', error)
-      showNotification('error', '오류 발생', '삭제 중 오류가 발생했습니다.')
     }
-  }
-
-  const openAddModal = () => {
-    setEditingNotice(null)
-    const newFormData = {
-      title: '',
-      bodyMd: '',
-      startAt: '',
-      endAt: '',
-      isOpen: true,
-      externalFormUrl: '',
-      targetAudience: '',
-      recruitCount: '',
-      recruitMethod: '',
-      shortDescription: ''
-    }
-    setFormData(newFormData)
-    setInitialFormData(newFormData)
-    setHasChanges(false)
-    setShowModal(true)
   }
 
   const loadTemplate = () => {
-    const template = `# 📋 모집 개요
+    const template = `# 모집 개요
 
 ## 모집 대상
-국민대학교 재학생 (학과 무관)
+국민대학교 재학생 (전 학과/학년)
 
 ## 모집 인원
 15명 내외
 
-## 지원 기간
-2025년 3월 ~ 3월 말
+## 모집 방법
+서류 + 면접
 
-## 활동 기간
-2025년 3월 ~ 12월
+## 주요 활동
+- 정기 스터디
+- 팀 프로젝트
+- 세미나 & 워크샵
+- 대회 참가
 
----
+## 지원 방법
+1. 지원서 작성
+2. 서류 심사
+3. 면접
+4. 최종 발표
 
-# ✅ 지원 자격
-
-- ✓ 국민대학교 재학생 (학과 무관, 학년 무관)
-- ✓ AI/ML에 대한 관심과 열정이 있는 학생
-- ✓ 동아리 활동에 적극적으로 참여할 의지가 있는 학생
-- ✓ 프로그래밍 경험 우대 (필수 아님)
-- ✓ 팀워크와 소통 능력을 갖춘 학생
-
----
-
-# 🚀 주요 활동
-
-## 정기 세미나
-- 매주 AI/ML 관련 기술 세미나
-- 최신 논문 리뷰 및 토론
-- 프로젝트 진행 상황 공유
-
-## 프로젝트
-- 팀 단위 AI 프로젝트 수행
-- 개인/팀 포트폴리오 구축
-- 대외 대회 참가 지원
-
-## 스터디
-- 기초 프로그래밍 (Python)
-- 머신러닝/딥러닝 기초
-- 자료구조 & 알고리즘
-
-## 네트워킹
-- 현업 전문가 특강
-- 졸업생 멘토링
-- IT 기업 견학
-
----
-
-# 📝 지원 절차
-
-1. **온라인 지원서 작성**
-   - 개인정보 및 지원 동기
-   - 포트폴리오 (있는 경우)
-
-2. **서류 심사**
-   - 지원서 기반 1차 심사
-
-3. **면접 심사**
-   - 개별 면접 (20분 내외)
-   - 지원 동기 및 활동 계획
-
-4. **최종 발표**
-   - 개별 연락 및 홈페이지 공지
-
----
-
-# 💡 자주 묻는 질문
-
-**Q: 프로그래밍을 전혀 모르는데 지원할 수 있나요?**
-A: 네! 열정과 의지만 있다면 충분합니다. 기초부터 차근차근 알려드립니다.
-
-**Q: 다른 동아리와 중복 가입이 가능한가요?**
-A: 가능하지만, AIM 활동에 적극적으로 참여할 수 있는지 고려해주세요.
-
-**Q: 학과 제한이 있나요?**
-A: 없습니다! 모든 학과 학생을 환영합니다.
-
-**Q: 활동비가 있나요?**
-A: 기본 활동비는 없으며, 필요시 동아리에서 지원합니다.`
-
-    setFormData({
-      ...formData,
-      bodyMd: template
-    })
+## 연락처
+- 이메일: aim@kookmin.ac.kr
+- 카카오톡: AIM 공식 채널`
+    
+    setFormData(prev => ({ ...prev, bodyMd: template }))
   }
 
-  const closeModal = () => {
-    if (hasChanges) {
-      setShowConfirmDialog(true)
-    } else {
-      setShowModal(false)
-      setEditingNotice(null)
-      setInitialFormData(null)
-      setHasChanges(false)
-    }
-  }
-
-  const confirmClose = () => {
-    setShowModal(false)
-    setEditingNotice(null)
-    setInitialFormData(null)
-    setHasChanges(false)
-    setShowConfirmDialog(false)
-  }
-
-  const saveAndClose = async () => {
-    // 먼저 저장 시도
-    await handleSubmit(new Event('submit') as any)
-    // handleSubmit에서 이미 모달이 닫히므로 추가 작업 불필요
-    setShowConfirmDialog(false)
-  }
-
-  const cancelClose = () => {
-    setShowConfirmDialog(false)
-  }
-
-  // 알림 헬퍼 함수들
-  const showNotification = (
-    type: 'success' | 'error' | 'warning' | 'info',
-    title: string,
-    message?: string,
-    onConfirm?: () => void,
-    confirmText?: string,
-    showCancel?: boolean
-  ) => {
-    setNotification({
-      show: true,
-      type,
-      title,
-      message,
-      onConfirm,
-      confirmText: confirmText || '확인',
-      showCancel: showCancel || false
-    })
+  const showNotification = (notification: {
+    show: boolean
+    type: 'success' | 'error' | 'warning' | 'info'
+    title: string
+    message: string
+    confirmText?: string
+    onConfirm?: () => void
+  }) => {
+    setNotification(notification)
   }
 
   const hideNotification = () => {
@@ -377,354 +405,260 @@ A: 기본 활동비는 없으며, 필요시 동아리에서 지원합니다.`
     hideNotification()
   }
 
-  const handleModalBackgroundClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      closeModal()
-    }
-  }
-
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500"></div>
+        <Loading text="모집 공고를 불러오는 중..." size="lg" />
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen bg-black">
       {/* 헤더 */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-white">모집 공고 관리</h1>
-          <p className="text-gray-400 mt-2">동아리 모집 공고를 작성하고 관리하세요.</p>
-        </div>
-        <button
-          onClick={openAddModal}
-          className="bg-cyan-600 text-white px-6 py-3 rounded-lg hover:bg-cyan-700 transition-colors font-medium"
-        >
+      <div className="mb-8">
+        <Title level={1} className="text-white mb-2">모집 공고 관리</Title>
+        <Subtitle className="text-gray-400">
+          모집 공고를 작성하고 관리할 수 있습니다.
+        </Subtitle>
+      </div>
+
+      {/* 추가 버튼 */}
+      <div className="mb-6">
+        <Button onClick={openAddModal} variant="primary">
           + 새 모집 공고 작성
-        </button>
+        </Button>
       </div>
 
       {/* 모집 공고 목록 */}
-      <div className="space-y-6">
+      <div className="space-y-4">
         {notices.length === 0 ? (
-          <div className="text-center py-16 bg-gray-800 rounded-lg border border-gray-700">
-            <div className="text-6xl mb-4">📢</div>
-            <h3 className="text-xl font-semibold text-white mb-2">등록된 모집 공고가 없습니다</h3>
-            <p className="text-gray-400 mb-6">새로운 모집 공고를 작성해보세요!</p>
-            <button
-              onClick={openAddModal}
-              className="bg-cyan-600 text-white px-6 py-3 rounded-lg hover:bg-cyan-700 transition-colors"
-            >
-              + 첫 번째 모집 공고 작성하기
-            </button>
-          </div>
+          <Card className="text-center py-12">
+            <Text variant="secondary" size="lg">
+              아직 등록된 모집 공고가 없습니다.
+            </Text>
+          </Card>
         ) : (
           notices.map((notice) => (
-            <div key={notice.id} className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
-              <div className="flex justify-between items-start mb-4">
+            <Card key={notice.id} className="p-6">
+              <div className="flex justify-between items-start">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
-                    <h3 className="text-xl font-semibold text-white">{notice.title}</h3>
-                    <div className="flex space-x-2">
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                        notice.isOpen 
-                          ? 'bg-green-600 text-white' 
-                          : 'bg-gray-600 text-white'
-                      }`}>
-                        {notice.isOpen ? '🟢 모집중' : '⏹️ 모집마감'}
-                      </span>
-                      {notice.isOpen && new Date(notice.endAt) < new Date() && (
-                        <span className="px-3 py-1 rounded-full text-sm font-medium bg-yellow-600 text-white">
-                          ⏰ 기간만료
-                        </span>
-                      )}
-                    </div>
+                    <Title level={3} className="text-white">
+                      {notice.title}
+                    </Title>
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${
+                      notice.isOpen 
+                        ? 'bg-green-600 text-white' 
+                        : 'bg-red-600 text-white'
+                    }`}>
+                      {notice.isOpen ? '진행중' : '마감'}
+                    </span>
                   </div>
-                  <div className="text-gray-400 text-sm space-y-1">
-                    <p>모집 기간: {new Date(notice.startAt).toLocaleDateString()} ~ {new Date(notice.endAt).toLocaleDateString()}</p>
-                    {notice.externalFormUrl && (
-                      <p>지원 링크: <a href={notice.externalFormUrl} target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300">{notice.externalFormUrl}</a></p>
-                    )}
-                    <p>작성일: {new Date(notice.createdAt).toLocaleDateString()}</p>
-                    {notice.updatedAt !== notice.createdAt && (
-                      <p>수정일: {new Date(notice.updatedAt).toLocaleDateString()}</p>
-                    )}
+                  <Text variant="secondary" className="mb-2">
+                    {notice.shortDescription || '설명이 없습니다.'}
+                  </Text>
+                  <div className="flex items-center space-x-4 text-sm text-gray-400">
+                    <span>시작: {new Date(notice.startAt).toLocaleDateString()}</span>
+                    <span>종료: {new Date(notice.endAt).toLocaleDateString()}</span>
                   </div>
                 </div>
                 <div className="flex space-x-2">
-                  <button
-                    onClick={() => handleEdit(notice)}
-                    className="flex items-center space-x-1 text-cyan-400 hover:text-cyan-300 text-sm px-3 py-2 bg-gray-700 rounded border border-gray-600 hover:border-cyan-500 transition-colors"
-                  >
-                    <span>✏️</span>
-                    <span>수정</span>
-                  </button>
-                  <button
-                    onClick={() => handleDelete(notice.id)}
-                    className="flex items-center space-x-1 text-red-400 hover:text-red-300 text-sm px-3 py-2 bg-gray-700 rounded border border-gray-600 hover:border-red-500 transition-colors"
-                  >
-                    <span>🗑️</span>
-                    <span>삭제</span>
-                  </button>
+                  <Button onClick={() => handleEdit(notice)} variant="ghost" size="sm">
+                    수정
+                  </Button>
+                  <Button onClick={() => handleDelete(notice.id)} variant="ghost" size="sm">
+                    삭제
+                  </Button>
                 </div>
               </div>
-              
-              <div className="bg-gray-700 border border-gray-600 rounded p-4">
-                <h4 className="text-white font-medium mb-2">내용 미리보기:</h4>
-                <div className="text-gray-300 text-sm max-h-32 overflow-y-auto whitespace-pre-wrap">
-                  {notice.bodyMd.length > 200 ? `${notice.bodyMd.substring(0, 200)}...` : notice.bodyMd}
-                </div>
-              </div>
-            </div>
+            </Card>
           ))
         )}
       </div>
 
       {/* 모달 */}
-      {showModal && (
-        <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-lg flex items-center justify-center p-4 pt-20"
-          onClick={handleModalBackgroundClick}
-          style={{zIndex: 40, backdropFilter: 'blur(8px) saturate(150%)'}}
-        >
-          <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-            <h2 className="text-2xl font-bold text-white mb-6">
-              {editingNotice ? `모집 공고 수정: ${editingNotice.title}` : '새 모집 공고 작성'}
-            </h2>
-            
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label className="block text-white font-medium mb-2">제목 *</label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => setFormData({...formData, title: e.target.value})}
-                  className="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-                  placeholder="모집 공고 제목을 입력하세요"
-                  required
-                />
-              </div>
+      <Modal
+        isOpen={showModal}
+        onClose={closeModal}
+        title={editingNotice ? `모집 공고 수정: ${editingNotice.title}` : '새 모집 공고 작성'}
+        onSubmit={handleSubmit}
+        submitText={editingNotice ? '수정' : '생성'}
+        maxWidth="4xl"
+      >
+        <div>
+          <label className="block text-white font-medium mb-2">제목 *</label>
+          <input
+            type="text"
+            value={formData.title}
+            onChange={(e) => setFormData({...formData, title: e.target.value})}
+            className="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+            placeholder="모집 공고 제목을 입력하세요"
+            required
+          />
+        </div>
 
-              {/* 카드 표시용 필드들 */}
-              <div className="bg-gray-700/50 rounded-lg p-6 border border-gray-600">
-                <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
-                  <span className="w-2 h-6 bg-gradient-to-b from-cyan-500 to-pink-500 rounded-full mr-2"></span>
-                  카드 표시 정보
-                </h3>
-                <p className="text-gray-400 text-sm mb-4">모집 페이지 상단 카드에 표시될 요약 정보입니다.</p>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-white font-medium mb-2">모집 대상</label>
-                    <input
-                      type="text"
-                      value={formData.targetAudience}
-                      onChange={(e) => setFormData({...formData, targetAudience: e.target.value})}
-                      className="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-                      placeholder="예: 국민대학교 재학생 (전 학과/학년)"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-white font-medium mb-2">모집 인원</label>
-                    <input
-                      type="text"
-                      value={formData.recruitCount}
-                      onChange={(e) => setFormData({...formData, recruitCount: e.target.value})}
-                      className="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-                      placeholder="예: 15명 내외"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-white font-medium mb-2">모집 방법</label>
-                    <input
-                      type="text"
-                      value={formData.recruitMethod}
-                      onChange={(e) => setFormData({...formData, recruitMethod: e.target.value})}
-                      className="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-                      placeholder="예: 서류 + 면접"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-white font-medium mb-2">짧은 설명</label>
-                    <input
-                      type="text"
-                      value={formData.shortDescription}
-                      onChange={(e) => setFormData({...formData, shortDescription: e.target.value})}
-                      className="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-                      placeholder="예: AI Monsters와 함께 성장해보세요!"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-white font-medium mb-2">내용 * (Markdown 지원)</label>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  {/* Markdown 입력 */}
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <label className="block text-sm text-gray-400">✏️ 편집</label>
-                      <button
-                        type="button"
-                        onClick={loadTemplate}
-                        className="text-xs bg-gray-600 hover:bg-gray-500 text-white px-3 py-1 rounded transition-colors"
-                      >
-                        📋 템플릿 불러오기
-                      </button>
-                    </div>
-                    <textarea
-                      value={formData.bodyMd}
-                      onChange={(e) => setFormData({...formData, bodyMd: e.target.value})}
-                      className="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent resize-none"
-                      rows={16}
-                      placeholder="모집 공고 내용을 Markdown 형식으로 작성하세요&#10;&#10;# 제목&#10;## 소제목&#10;- 리스트 아이템&#10;**굵은 글씨**&#10;*기울임 글씨*&#10;[링크](https://example.com)"
-                      required
-                    />
-                  </div>
-                  
-                  {/* Markdown 미리보기 */}
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">👀 미리보기</label>
-                    <div className="bg-gray-800 border border-gray-600 rounded-lg p-4 h-96 overflow-y-auto">
-                      {formData.bodyMd ? (
-                        <div className="prose prose-invert prose-sm max-w-none">
-                          <ReactMarkdown 
-                            remarkPlugins={[remarkGfm]}
-                            components={{
-                              h1: ({children}) => <h1 className="text-2xl font-bold text-white mb-4 border-b border-gray-600 pb-2">{children}</h1>,
-                              h2: ({children}) => <h2 className="text-xl font-semibold text-white mb-3 mt-6">{children}</h2>,
-                              h3: ({children}) => <h3 className="text-lg font-medium text-white mb-2 mt-4">{children}</h3>,
-                              p: ({children}) => <p className="text-gray-300 mb-3 leading-relaxed">{children}</p>,
-                              ul: ({children}) => <ul className="text-gray-300 mb-3 pl-4 space-y-1">{children}</ul>,
-                              ol: ({children}) => <ol className="text-gray-300 mb-3 pl-4 space-y-1">{children}</ol>,
-                              li: ({children}) => <li className="flex items-start"><span className="text-cyan-400 mr-2">•</span><span>{children}</span></li>,
-                              strong: ({children}) => <strong className="text-white font-semibold">{children}</strong>,
-                              em: ({children}) => <em className="text-cyan-300">{children}</em>,
-                              code: ({children}) => <code className="bg-gray-700 text-cyan-300 px-1 py-0.5 rounded text-sm">{children}</code>,
-                              pre: ({children}) => <pre className="bg-gray-700 text-cyan-300 p-3 rounded overflow-x-auto text-sm mb-3">{children}</pre>,
-                              a: ({href, children}) => <a href={href} className="text-cyan-400 hover:text-cyan-300 underline" target="_blank" rel="noopener noreferrer">{children}</a>,
-                              blockquote: ({children}) => <blockquote className="border-l-4 border-cyan-500 pl-4 italic text-gray-400 mb-3">{children}</blockquote>,
-                              hr: () => <hr className="border-gray-600 my-4" />
-                            }}
-                          >
-                            {formData.bodyMd}
-                          </ReactMarkdown>
-                        </div>
-                      ) : (
-                        <div className="text-gray-500 italic text-center py-8">
-                          왼쪽에 Markdown을 입력하면<br />
-                          여기에 미리보기가 표시됩니다
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-white font-medium mb-2">모집 시작일 *</label>
-                  <input
-                    type="datetime-local"
-                    value={formData.startAt}
-                    onChange={(e) => setFormData({...formData, startAt: e.target.value})}
-                    className="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-white font-medium mb-2">모집 마감일 *</label>
-                  <input
-                    type="datetime-local"
-                    value={formData.endAt}
-                    onChange={(e) => setFormData({...formData, endAt: e.target.value})}
-                    className="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-white font-medium mb-2">외부 지원 링크 (선택사항)</label>
-                <input
-                  type="url"
-                  value={formData.externalFormUrl}
-                  onChange={(e) => setFormData({...formData, externalFormUrl: e.target.value})}
-                  className="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-                  placeholder="https://forms.google.com/... (선택사항)"
-                />
-              </div>
-
-              <div className="flex items-center space-x-3">
-                <input
-                  type="checkbox"
-                  id="isOpen"
-                  checked={formData.isOpen}
-                  onChange={(e) => setFormData({...formData, isOpen: e.target.checked})}
-                  className="w-4 h-4 text-cyan-600 bg-gray-700 border-gray-600 rounded focus:ring-cyan-500"
-                />
-                <label htmlFor="isOpen" className="text-white font-medium">
-                  모집 공개 (체크 해제 시 모집이 마감됩니다)
-                </label>
-              </div>
-
-              <div className="flex justify-end space-x-4 pt-4">
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-                >
-                  취소
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors"
-                >
-                  {editingNotice ? '수정하기' : '작성하기'}
-                </button>
-              </div>
-            </form>
-          </div>
-
-          {/* 확인 대화상자 */}
-          {showConfirmDialog && (
-            <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
-              <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 max-w-lg w-full mx-4">
-                <h3 className="text-lg font-semibold text-white mb-4">
-                  변경사항이 저장되지 않았습니다
-                </h3>
-                <p className="text-gray-300 mb-6">
-                  작성하신 내용에 변경사항이 있습니다. 어떻게 하시겠습니까?
-                </p>
-                <div className="flex flex-col gap-3">
-                  <button
-                    onClick={saveAndClose}
-                    className="w-full px-4 py-3 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors font-medium"
-                  >
-                    저장하고 닫기
-                  </button>
-                  <button
-                    onClick={cancelClose}
-                    className="w-full px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
-                  >
-                    계속하기
-                  </button>
-                  <button
-                    onClick={confirmClose}
-                    className="w-full px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
-                  >
-                    저장하지 않고 닫기
-                  </button>
-                </div>
-              </div>
+        {/* 카드 표시용 필드들 */}
+        <div className="bg-gray-700/50 rounded-lg p-6 border border-gray-600">
+          <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+            <span className="w-8 h-8 bg-cyan-500 rounded-full flex items-center justify-center mr-3">
+              <span className="text-black font-bold text-sm">📋</span>
+            </span>
+            카드 표시 정보
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-white font-medium mb-2">모집 대상</label>
+              <input
+                type="text"
+                value={formData.targetAudience}
+                onChange={(e) => setFormData({...formData, targetAudience: e.target.value})}
+                className="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                placeholder="예: 국민대학교 재학생 (전 학과/학년)"
+              />
             </div>
-          )}
+            <div>
+              <label className="block text-white font-medium mb-2">모집 인원</label>
+              <input
+                type="text"
+                value={formData.recruitCount}
+                onChange={(e) => setFormData({...formData, recruitCount: e.target.value})}
+                className="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                placeholder="예: 15명 내외"
+              />
+            </div>
+            <div>
+              <label className="block text-white font-medium mb-2">모집 방법</label>
+              <input
+                type="text"
+                value={formData.recruitMethod}
+                onChange={(e) => setFormData({...formData, recruitMethod: e.target.value})}
+                className="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                placeholder="예: 서류 + 면접"
+              />
+            </div>
+            <div>
+              <label className="block text-white font-medium mb-2">짧은 설명</label>
+              <input
+                type="text"
+                value={formData.shortDescription}
+                onChange={(e) => setFormData({...formData, shortDescription: e.target.value})}
+                className="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                placeholder="카드에 표시될 짧은 설명"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* 마크다운 에디터 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div>
+            <div className="flex justify-between items-center mb-2">
+              <label className="block text-white font-medium">상세 내용 (Markdown) *</label>
+              <Button type="button" onClick={loadTemplate} variant="ghost" size="sm">
+                템플릿 로드
+              </Button>
+            </div>
+            <textarea
+              value={formData.bodyMd}
+              onChange={(e) => setFormData({...formData, bodyMd: e.target.value})}
+              className="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent h-96 resize-none"
+              placeholder="Markdown 형식으로 모집 공고 내용을 작성하세요..."
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-white font-medium mb-2">미리보기</label>
+            <div className="bg-gray-800 border border-gray-600 rounded-lg p-4 h-96 overflow-y-auto">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {formData.bodyMd || '*내용을 입력하면 여기에 미리보기가 표시됩니다.*'}
+              </ReactMarkdown>
+            </div>
+          </div>
+        </div>
+
+        {/* 날짜 및 설정 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-white font-medium mb-2">모집 시작일 *</label>
+            <input
+              type="date"
+              value={formData.startAt}
+              onChange={(e) => setFormData({...formData, startAt: e.target.value})}
+              className="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-white font-medium mb-2">모집 마감일 *</label>
+            <input
+              type="date"
+              value={formData.endAt}
+              onChange={(e) => setFormData({...formData, endAt: e.target.value})}
+              className="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+              required
+            />
+          </div>
+        </div>
+
+        {/* 외부 폼 URL */}
+        <div>
+          <label className="block text-white font-medium mb-2">외부 지원 폼 URL (선택사항)</label>
+          <input
+            type="url"
+            value={formData.externalFormUrl}
+            onChange={(e) => setFormData({...formData, externalFormUrl: e.target.value})}
+            className="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+            placeholder="https://forms.google.com/..."
+          />
+        </div>
+
+        {/* 모집 공개 설정 */}
+        <div className="flex items-center space-x-3">
+          <input
+            type="checkbox"
+            id="isOpen"
+            checked={formData.isOpen}
+            onChange={(e) => setFormData({...formData, isOpen: e.target.checked})}
+            className="w-4 h-4 text-cyan-600 bg-gray-700 border-gray-600 rounded focus:ring-cyan-500"
+          />
+          <label htmlFor="isOpen" className="text-white font-medium">
+            모집 공개 (체크 해제 시 모집이 마감됩니다)
+          </label>
+        </div>
+      </Modal>
+
+      {/* 확인 대화상자 */}
+      {showConfirmDialog && (
+        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
+          <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 max-w-lg w-full mx-4">
+            <h3 className="text-lg font-semibold text-white mb-4">
+              변경사항이 저장되지 않았습니다
+            </h3>
+            <p className="text-gray-300 mb-6">
+              작성하신 내용에 변경사항이 있습니다. 어떻게 하시겠습니까?
+            </p>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={saveAndClose}
+                className="w-full px-4 py-3 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors font-medium"
+              >
+                저장하고 닫기
+              </button>
+              <button
+                onClick={cancelClose}
+                className="w-full px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
+              >
+                계속하기
+              </button>
+              <button
+                onClick={confirmClose}
+                className="w-full px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+              >
+                저장하지 않고 닫기
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -757,32 +691,23 @@ A: 기본 활동비는 없으며, 필요시 동아리에서 지원합니다.`
                 {notification.title}
               </h3>
             </div>
-            
-            {notification.message && (
-              <p className="text-gray-300 mb-6">
-                {notification.message}
-              </p>
-            )}
-            
-            <div className="flex gap-3 justify-end">
-              {notification.showCancel && (
+            <p className="text-gray-300 mb-6">
+              {notification.message}
+            </p>
+            <div className="flex justify-end space-x-3">
+              {notification.onConfirm && (
                 <button
-                  onClick={hideNotification}
-                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                  onClick={handleNotificationConfirm}
+                  className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors font-medium"
                 >
-                  취소
+                  {notification.confirmText}
                 </button>
               )}
               <button
-                onClick={handleNotificationConfirm}
-                className={`px-4 py-2 text-white rounded-lg transition-colors ${
-                  notification.type === 'error' ? 'bg-red-600 hover:bg-red-700' :
-                  notification.type === 'warning' ? 'bg-yellow-600 hover:bg-yellow-700' :
-                  notification.type === 'success' ? 'bg-green-600 hover:bg-green-700' :
-                  'bg-cyan-600 hover:bg-cyan-700'
-                }`}
+                onClick={hideNotification}
+                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
               >
-                {notification.confirmText}
+                {notification.onConfirm ? '취소' : '확인'}
               </button>
             </div>
           </div>

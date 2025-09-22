@@ -1,0 +1,577 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { Button, Card, Text, Title, Subtitle, Loading, Modal } from '@/components/ui'
+
+interface AboutSection {
+  id: string
+  type: string
+  title: string
+  content: string
+  order: number
+  isActive: boolean
+}
+
+interface AboutActivity {
+  id: string
+  title: string
+  description: string
+  icon: string
+  color: string
+  order: number
+  isActive: boolean
+}
+
+interface AboutHistory {
+  id: string
+  year: number
+  title: string
+  description: string
+  order: number
+  isActive: boolean
+}
+
+interface AboutContact {
+  id: string
+  type: string
+  label: string
+  value: string
+  order: number
+  isActive: boolean
+}
+
+export default function AboutManagementPage() {
+  const [activeTab, setActiveTab] = useState<'sections' | 'activities' | 'history' | 'contact'>('sections')
+  const [sections, setSections] = useState<AboutSection[]>([])
+  const [activities, setActivities] = useState<AboutActivity[]>([])
+  const [history, setHistory] = useState<AboutHistory[]>([])
+  const [contacts, setContacts] = useState<AboutContact[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showModal, setShowModal] = useState(false)
+  const [editingItem, setEditingItem] = useState<any>(null)
+  const [formData, setFormData] = useState<{
+    type?: string
+    title?: string
+    content?: string
+    description?: string
+    icon?: string
+    color?: string
+    year?: number
+    label?: string
+    value?: string
+    order?: number
+  }>({})
+  const [notification, setNotification] = useState<{
+    show: boolean
+    type: 'success' | 'error'
+    title: string
+    message: string
+  }>({
+    show: false,
+    type: 'success',
+    title: '',
+    message: ''
+  })
+
+  // 페이지 제목 설정
+  useEffect(() => {
+    document.title = '소개 관리 - AIM: AI Monsters'
+  }, [])
+
+  // 데이터 로드
+  const fetchData = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      const [sectionsRes, activitiesRes, historyRes, contactsRes] = await Promise.all([
+        fetch('http://localhost:3001/api/content/about/sections/admin', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch('http://localhost:3001/api/content/about/activities/admin', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch('http://localhost:3001/api/content/about/history/admin', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch('http://localhost:3001/api/content/about/contact/admin', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      ])
+
+      if (sectionsRes.ok) setSections(await sectionsRes.json())
+      if (activitiesRes.ok) setActivities(await activitiesRes.json())
+      if (historyRes.ok) setHistory(await historyRes.json())
+      if (contactsRes.ok) setContacts(await contactsRes.json())
+    } catch (error) {
+      console.error('데이터 로드 오류:', error)
+      showNotification({
+        show: true,
+        type: 'error',
+        title: '오류',
+        message: '데이터를 불러오는데 실패했습니다.'
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchData()
+  }, [])
+
+  // 모달 열기
+  const openAddModal = () => {
+    setEditingItem(null)
+    setFormData({})
+    setShowModal(true)
+  }
+
+  // 모달 닫기
+  const closeModal = () => {
+    setShowModal(false)
+    setEditingItem(null)
+    setFormData({})
+  }
+
+  // 모달 배경 클릭 핸들러
+
+  // 수정 모드로 전환
+  const handleEdit = (item: any) => {
+    setEditingItem(item)
+    setFormData({ ...item })
+    setShowModal(true)
+  }
+
+  // 폼 제출
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    try {
+      const token = localStorage.getItem('token')
+      const endpoint = getEndpoint()
+      const method = editingItem ? 'PUT' : 'POST'
+      const url = editingItem ? `${endpoint}/${editingItem.id}` : endpoint
+      
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(formData)
+      })
+
+      if (response.ok) {
+        showNotification({
+          show: true,
+          type: 'success',
+          title: '성공',
+          message: editingItem ? '수정되었습니다.' : '생성되었습니다.'
+        })
+        fetchData()
+        closeModal()
+      } else {
+        const data = await response.json()
+        showNotification({
+          show: true,
+          type: 'error',
+          title: '오류',
+          message: data.error || '저장에 실패했습니다.'
+        })
+      }
+    } catch (error) {
+      console.error('저장 오류:', error)
+      showNotification({
+        show: true,
+        type: 'error',
+        title: '오류',
+        message: '서버와의 통신에 실패했습니다.'
+      })
+    }
+  }
+
+  // 삭제
+  const handleDelete = async (id: string) => {
+    if (!confirm('정말로 삭제하시겠습니까?')) return
+
+    try {
+      const token = localStorage.getItem('token')
+      const endpoint = getEndpoint()
+      const response = await fetch(`${endpoint}/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+
+      if (response.ok) {
+        showNotification({
+          show: true,
+          type: 'success',
+          title: '성공',
+          message: '삭제되었습니다.'
+        })
+        fetchData()
+      } else {
+        showNotification({
+          show: true,
+          type: 'error',
+          title: '오류',
+          message: '삭제에 실패했습니다.'
+        })
+      }
+    } catch (error) {
+      console.error('삭제 오류:', error)
+      showNotification({
+        show: true,
+        type: 'error',
+        title: '오류',
+        message: '서버와의 통신에 실패했습니다.'
+      })
+    }
+  }
+
+  // 엔드포인트 가져오기
+  const getEndpoint = () => {
+    switch (activeTab) {
+      case 'sections': return 'http://localhost:3001/api/content/about/sections'
+      case 'activities': return 'http://localhost:3001/api/content/about/activities'
+      case 'history': return 'http://localhost:3001/api/content/about/history'
+      case 'contact': return 'http://localhost:3001/api/content/about/contact'
+      default: return ''
+    }
+  }
+
+  // 현재 데이터 가져오기
+  const getCurrentData = () => {
+    switch (activeTab) {
+      case 'sections': return sections
+      case 'activities': return activities
+      case 'history': return history
+      case 'contact': return contacts
+      default: return []
+    }
+  }
+
+  // 알림 표시
+  const showNotification = (notification: {
+    show: boolean
+    type: 'success' | 'error'
+    title: string
+    message: string
+  }) => {
+    setNotification(notification)
+  }
+
+  // 알림 숨기기
+  const hideNotification = () => {
+    setNotification(prev => ({ ...prev, show: false }))
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black">
+        <div className="flex justify-center items-center h-screen">
+          <Loading text="소개 내용을 불러오는 중..." size="lg" />
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-black">
+      {/* 헤더 */}
+      <div className="mb-8">
+        <Title level={1} className="text-white mb-2">소개 관리</Title>
+        <Subtitle className="text-gray-400">
+          소개 페이지의 각 섹션을 관리할 수 있습니다.
+        </Subtitle>
+      </div>
+
+        {/* 탭 네비게이션 */}
+        <div className="mb-6">
+          <div className="flex space-x-1 bg-gray-800 p-1 rounded-lg">
+            {[
+              { key: 'sections', label: '소개 섹션', icon: '📝' },
+              { key: 'activities', label: '주요 활동', icon: '🚀' },
+              { key: 'history', label: '동아리 연혁', icon: '📅' },
+              { key: 'contact', label: '연락처', icon: '📞' }
+            ].map((tab) => (
+            <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key as any)}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  activeTab === tab.key
+                    ? 'bg-cyan-500 text-black'
+                    : 'text-gray-400 hover:text-white hover:bg-gray-700'
+                }`}
+              >
+                {tab.icon} {tab.label}
+            </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 액션 버튼 */}
+        <div className="mb-6">
+          <Button onClick={openAddModal} variant="primary">
+            새 {activeTab === 'sections' ? '섹션' : activeTab === 'activities' ? '활동' : activeTab === 'history' ? '연혁' : '연락처'} 추가
+          </Button>
+        </div>
+
+        {/* 데이터 목록 */}
+        <div className="space-y-4">
+          {getCurrentData().length === 0 ? (
+            <Card className="text-center py-12">
+              <Text variant="secondary" size="lg">
+                등록된 {activeTab === 'sections' ? '섹션' : activeTab === 'activities' ? '활동' : activeTab === 'history' ? '연혁' : '연락처'}이 없습니다.
+              </Text>
+            </Card>
+          ) : (
+            getCurrentData().map((item: any) => (
+              <Card key={item.id} className="p-6">
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex-1">
+                    <Title level={3} className="text-white mb-2">
+                      {item.title || item.label}
+                    </Title>
+                    <Text variant="secondary" className="mb-2">
+                      {item.content || item.description || item.value}
+                    </Text>
+                    {item.year && (
+                      <Text variant="muted" size="sm" className="mb-1">
+                        연도: {item.year}
+                      </Text>
+                    )}
+                    <Text variant="muted" size="sm">
+                      순서: {item.order}
+                    </Text>
+                  </div>
+                  <div className="flex space-x-2 ml-4">
+                    <Button 
+                      onClick={() => handleEdit(item)} 
+                      variant="ghost" 
+                      size="sm"
+                    >
+                      수정
+                    </Button>
+                    <Button 
+                      onClick={() => handleDelete(item.id)} 
+                      variant="secondary" 
+                      size="sm"
+                    >
+                      삭제
+                    </Button>
+              </div>
+                </div>
+              </Card>
+          ))
+        )}
+      </div>
+
+        {/* 모달 */}
+        <Modal
+          isOpen={showModal}
+          onClose={closeModal}
+          title={editingItem ? `${activeTab === 'sections' ? '소개 섹션' : activeTab === 'activities' ? '주요 활동' : activeTab === 'history' ? '동아리 연혁' : '연락처'} 수정` : `새 ${activeTab === 'sections' ? '소개 섹션' : activeTab === 'activities' ? '주요 활동' : activeTab === 'history' ? '동아리 연혁' : '연락처'} 추가`}
+          onSubmit={handleSubmit}
+          submitText={editingItem ? '수정' : '생성'}
+          maxWidth="4xl"
+        >
+                  {activeTab === 'sections' && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-white mb-2">타입</label>
+                        <select
+                          value={formData.type || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-600 rounded-md bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                          required
+                        >
+                          <option value="">타입을 선택하세요</option>
+                          <option value="intro">소개</option>
+                          <option value="activity">활동</option>
+                          <option value="history">연혁</option>
+                          <option value="contact">연락처</option>
+                        </select>
+                      </div>
+              <div>
+                        <label className="block text-sm font-medium text-white mb-2">제목</label>
+                <input
+                  type="text"
+                          value={formData.title || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-600 rounded-md bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                  required
+                />
+              </div>
+                  <div>
+                        <label className="block text-sm font-medium text-white mb-2">내용</label>
+                        <textarea
+                          value={formData.content || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-600 rounded-md bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                          rows={6}
+                          required
+                    />
+                  </div>
+                    </>
+                  )}
+                  
+                  {activeTab === 'activities' && (
+                    <>
+                  <div>
+                        <label className="block text-sm font-medium text-white mb-2">제목</label>
+                    <input
+                      type="text"
+                          value={formData.title || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-600 rounded-md bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                          required
+                    />
+                  </div>
+                  <div>
+                        <label className="block text-sm font-medium text-white mb-2">설명</label>
+                        <textarea
+                          value={formData.description || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-600 rounded-md bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                          rows={4}
+                          required
+                    />
+                  </div>
+                      <div className="grid grid-cols-2 gap-4">
+                  <div>
+                          <label className="block text-sm font-medium text-white mb-2">아이콘</label>
+                    <input
+                      type="text"
+                            value={formData.icon || ''}
+                            onChange={(e) => setFormData(prev => ({ ...prev, icon: e.target.value }))}
+                            className="w-full px-3 py-2 border border-gray-600 rounded-md bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                            placeholder="📚"
+                      required
+                    />
+                  </div>
+                  <div>
+                          <label className="block text-sm font-medium text-white mb-2">색상</label>
+                          <select
+                            value={formData.color || ''}
+                            onChange={(e) => setFormData(prev => ({ ...prev, color: e.target.value }))}
+                            className="w-full px-3 py-2 border border-gray-600 rounded-md bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                            required
+                          >
+                            <option value="">색상을 선택하세요</option>
+                            <option value="cyan">cyan</option>
+                            <option value="pink">pink</option>
+                            <option value="yellow">yellow</option>
+                            <option value="purple">purple</option>
+                          </select>
+                        </div>
+                        </div>
+                    </>
+                  )}
+
+                  {activeTab === 'history' && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-white mb-2">연도</label>
+                        <input
+                          type="number"
+                          value={formData.year || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, year: parseInt(e.target.value) }))}
+                          className="w-full px-3 py-2 border border-gray-600 rounded-md bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                          required
+                        />
+                    </div>
+                      <div>
+                        <label className="block text-sm font-medium text-white mb-2">제목</label>
+                        <input
+                          type="text"
+                          value={formData.title || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-600 rounded-md bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                          required
+                        />
+                  </div>
+                      <div>
+                        <label className="block text-sm font-medium text-white mb-2">설명</label>
+                        <textarea
+                          value={formData.description || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-600 rounded-md bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                          rows={4}
+                          required
+                        />
+                </div>
+                    </>
+                  )}
+
+                  {activeTab === 'contact' && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-white mb-2">타입</label>
+                        <select
+                          value={formData.type || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-600 rounded-md bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                          required
+                        >
+                          <option value="">타입을 선택하세요</option>
+                          <option value="email">이메일</option>
+                          <option value="github">GitHub</option>
+                          <option value="instagram">Instagram</option>
+                          <option value="phone">전화번호</option>
+                        </select>
+              </div>
+                <div>
+                        <label className="block text-sm font-medium text-white mb-2">라벨</label>
+                  <input
+                          type="text"
+                          value={formData.label || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, label: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-600 rounded-md bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                    required
+                  />
+                </div>
+                <div>
+                        <label className="block text-sm font-medium text-white mb-2">값</label>
+                  <input
+                          type="text"
+                          value={formData.value || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, value: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-600 rounded-md bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                    required
+                  />
+                </div>
+                    </>
+                  )}
+
+              <div>
+                    <label className="block text-sm font-medium text-white mb-2">순서</label>
+                <input
+                      type="number"
+                      value={formData.order || 0}
+                      onChange={(e) => setFormData(prev => ({ ...prev, order: parseInt(e.target.value) }))}
+                      className="w-full px-3 py-2 border border-gray-600 rounded-md bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                />
+              </div>
+
+
+        {/* 알림 */}
+      {notification.show && (
+          <div className="fixed top-4 right-4 z-50 bg-gray-800 border border-gray-600 rounded-lg p-4 max-w-sm">
+            <div className="flex items-start">
+              <div className="flex-1">
+                <Title level={4} className="text-white mb-1">
+                {notification.title}
+                </Title>
+                <Text variant="secondary" size="sm">
+                  {notification.message}
+                </Text>
+            </div>
+              <Button onClick={hideNotification} variant="ghost" size="sm" className="ml-2">
+                ✕
+              </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

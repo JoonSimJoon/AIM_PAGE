@@ -83,7 +83,7 @@ export default function RecruitPage() {
   const fetchPastRecruits = async () => {
     setLoadingPast(true)
     try {
-      const response = await fetch('http://localhost:3001/api/content/recruit/past')
+      const response = await fetch('/api/content/recruit/past')
       if (response.ok) {
         const data = await response.json()
         setPastRecruits(data)
@@ -117,7 +117,7 @@ export default function RecruitPage() {
 
   const fetchActiveRecruitNotice = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/content/recruit/active')
+      const response = await fetch('/api/content/recruit/active')
       if (response.ok) {
         const data = await response.json()
         setRecruitNotice(data)
@@ -803,8 +803,53 @@ export default function RecruitPage() {
 
       {/* 푸터 */}
       <footer className="bg-black border-t border-gray-800 py-8 mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p className="text-gray-400">&copy; 2024 AIM (AI Monsters). All rights reserved.</p>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+            {/* 문의하기 섹션 */}
+            <div className="text-center md:text-left">
+              <h3 className="text-lg font-semibold text-white mb-4">문의하기</h3>
+              <p className="text-gray-400 mb-4">
+                모집 관련 문의사항이 있으시면 운영진에게 문의 바랍니다.
+              </p>
+              <a 
+                href="mailto:aim@kookmin.ac.kr"
+                className="inline-flex items-center bg-cyan-500 hover:bg-cyan-400 text-black px-4 py-2 rounded-md font-medium transition-colors"
+              >
+                📧 aim@kookmin.ac.kr
+              </a>
+            </div>
+            
+            {/* 빠른 링크 */}
+            <div className="text-center md:text-left">
+              <h3 className="text-lg font-semibold text-white mb-4">빠른 링크</h3>
+              <div className="space-y-2">
+                <Link href="/about" className="block text-gray-400 hover:text-cyan-400 transition-colors">
+                  소개
+                </Link>
+                <Link href="/members" className="block text-gray-400 hover:text-cyan-400 transition-colors">
+                  부원
+                </Link>
+                <Link href="/login" className="block text-gray-400 hover:text-cyan-400 transition-colors">
+                  로그인
+                </Link>
+              </div>
+            </div>
+            
+            {/* 동아리 정보 */}
+            <div className="text-center md:text-left">
+              <h3 className="text-lg font-semibold text-white mb-4">AIM</h3>
+              <p className="text-gray-400 mb-2">
+                AI Monsters
+              </p>
+              <p className="text-gray-400 text-sm">
+                국민대학교 AI와 머신러닝 동아리
+              </p>
+            </div>
+          </div>
+          
+          <div className="border-t border-gray-700 pt-6 text-center">
+            <p className="text-gray-400">&copy; 2024 AIM (AI Monsters). All rights reserved.</p>
+          </div>
         </div>
       </footer>
     </div>
