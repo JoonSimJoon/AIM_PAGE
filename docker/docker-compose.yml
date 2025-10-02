@@ -14,7 +14,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./backend/prisma/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ../backend/prisma/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - aim-network
 
@@ -33,7 +33,7 @@ services:
   # 백엔드 API 서버
   backend:
     build:
-      context: ./backend
+      context: ../backend
       dockerfile: Dockerfile
     container_name: aim-page-backend
     restart: unless-stopped
@@ -53,7 +53,7 @@ services:
       - postgres
       - redis
     volumes:
-      - ./backend:/app
+      - ../backend:/app
       - /app/node_modules
     networks:
       - aim-network
@@ -62,7 +62,7 @@ services:
   # 프론트엔드 Next.js 앱
   frontend:
     build:
-      context: ./frontend
+      context: ../frontend
       dockerfile: Dockerfile
     container_name: aim-page-frontend
     restart: unless-stopped
@@ -74,7 +74,7 @@ services:
     depends_on:
       - backend
     volumes:
-      - ./frontend:/app
+      - ../frontend:/app
       - /app/node_modules
       - /app/.next
     networks:

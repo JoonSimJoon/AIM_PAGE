@@ -61,10 +61,10 @@ export default function AboutPage() {
   const fetchAboutData = async () => {
     try {
       const [sectionsRes, activitiesRes, historyRes, contactsRes] = await Promise.all([
-        fetch('/api/content/about/sections'),
-        fetch('/api/content/about/activities'),
-        fetch('/api/content/about/history'),
-        fetch('/api/content/about/contact')
+        fetch('http://localhost:3001/api/content/about/sections'),
+        fetch('http://localhost:3001/api/content/about/activities'),
+        fetch('http://localhost:3001/api/content/about/history'),
+        fetch('http://localhost:3001/api/content/about/contact')
       ])
 
       if (sectionsRes.ok) {

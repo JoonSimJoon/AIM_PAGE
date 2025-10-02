@@ -48,6 +48,8 @@ export default function AboutManagementPage() {
   const [contacts, setContacts] = useState<AboutContact[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deletingItem, setDeletingItem] = useState<any>(null)
   const [editingItem, setEditingItem] = useState<any>(null)
   const [formData, setFormData] = useState<{
     type?: string
@@ -66,11 +68,13 @@ export default function AboutManagementPage() {
     type: 'success' | 'error'
     title: string
     message: string
+    hiding?: boolean
   }>({
     show: false,
     type: 'success',
     title: '',
-    message: ''
+    message: '',
+    hiding: false
   })
 
   useEffect(() => {
@@ -84,15 +88,30 @@ export default function AboutManagementPage() {
   const fetchData = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/content/about/${activeTab}`)
+      const token = localStorage.getItem('token')
+      const response = await fetch(`http://localhost:3001/api/content/about/${activeTab}/admin`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
       if (response.ok) {
         const data = await response.json()
         switch (activeTab) {
-          case 'sections': setSections(data)
-          case 'activities': setActivities(data)
-          case 'history': setHistory(data)
-          case 'contact': setContacts(data)
+          case 'sections':
+            setSections(data)
+            break
+          case 'activities':
+            setActivities(data)
+            break
+          case 'history':
+            setHistory(data)
+            break
+          case 'contact':
+            setContacts(data)
+            break
         }
+      } else {
+        console.error('API 호출 실패:', response.status)
       }
     } catch (error) {
       console.error('데이터 로딩 오류:', error)
@@ -119,12 +138,25 @@ export default function AboutManagementPage() {
     setShowModal(true)
   }
 
-  const handleDelete = async (id: string) => {
+  const openDeleteModal = (item: any) => {
+    setDeletingItem(item)
+    setShowDeleteModal(true)
+  }
+
+  const closeDeleteModal = () => {
+    setShowDeleteModal(false)
+    setDeletingItem(null)
+  }
+
+  const confirmDelete = async () => {
+    if (!deletingItem) return
+
     try {
-      const response = await fetch(`/api/content/about/${activeTab}/${id}`, {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`http://localhost:3001/api/content/about/${activeTab}/${deletingItem.id}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       })
       
@@ -135,6 +167,7 @@ export default function AboutManagementPage() {
           title: '삭제 완료',
           message: '항목이 성공적으로 삭제되었습니다.'
         })
+        closeDeleteModal()
         fetchData()
       } else {
         showNotification({
@@ -157,9 +190,10 @@ export default function AboutManagementPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
+      const token = localStorage.getItem('token')
       const url = editingItem 
-        ? `/api/content/about/${activeTab}/${editingItem.id}`
-        : `/api/content/about/${activeTab}`
+        ? `http://localhost:3001/api/content/about/${activeTab}/${editingItem.id}`
+        : `http://localhost:3001/api/content/about/${activeTab}`
       
       const method = editingItem ? 'PUT' : 'POST'
       
@@ -167,7 +201,7 @@ export default function AboutManagementPage() {
         method,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(formData)
       })
@@ -216,10 +250,18 @@ export default function AboutManagementPage() {
     message: string
   }) => {
     setNotification(notification)
+    // 3초 후 자동으로 사라지게 설정
+    setTimeout(() => {
+      hideNotification()
+    }, 3000)
   }
 
   const hideNotification = () => {
-    setNotification(prev => ({ ...prev, show: false }))
+    setNotification(prev => ({ ...prev, hiding: true }))
+    // 애니메이션 후 완전히 제거
+    setTimeout(() => {
+      setNotification({ show: false, type: 'success', title: '', message: '', hiding: false })
+    }, 300)
   }
 
   if (loading) {
@@ -315,7 +357,7 @@ export default function AboutManagementPage() {
                   <Button onClick={() => handleEdit(item)} variant="ghost" size="sm">
                     수정
                   </Button>
-                  <Button onClick={() => handleDelete(item.id)} variant="ghost" size="sm">
+                  <Button onClick={() => openDeleteModal(item)} variant="ghost" size="sm">
                     삭제
                   </Button>
                 </div>
@@ -563,22 +605,66 @@ export default function AboutManagementPage() {
 
       </Modal>
 
+      {/* 삭제 확인 모달 */}
+      <Modal
+        isOpen={showDeleteModal}
+        onSubmit={confirmDelete}
+        onClose={closeDeleteModal}
+        submitText = '삭제'
+        title="삭제 확인"
+      >
+        <div className="space-y-4">
+          <Text className="text-white">
+            {deletingItem && (
+              <>
+                <span className="font-semibold text-red-400">
+                  "{deletingItem.title || deletingItem.label || '이 항목'}"
+                </span>
+                을(를) 삭제하시겠습니까?
+              </>
+            )}
+          </Text>
+          <Text variant="secondary" size="sm">
+            이 작업은 되돌릴 수 없습니다.
+          </Text>
+          
+        </div>
+      </Modal>
+
       {/* 알림 */}
       {notification.show && (
-        <div className="fixed top-4 right-4 z-50 bg-gray-800 border border-gray-600 rounded-lg p-4 max-w-sm">
-          <div className="flex items-start">
-            <div className="flex-1">
-              <Title level={4} className="text-white mb-1">
-                {notification.title}
-              </Title>
-              <Text variant="secondary" size="sm">
-                {notification.message}
-              </Text>
+        <div className={`fixed top-4 right-4 z-50 bg-gray-800 border ${
+            notification.type === 'success' ? 'border-green-500' : 'border-red-500'
+          } rounded-lg p-4 w-80 shadow-2xl ${
+            notification.hiding ? 'animate-slide-out-right' : 'animate-slide-in-right'
+          }`}>
+            <div className="flex items-start gap-3">
+              <div className={`w-1 h-full absolute left-0 top-0 bottom-0 rounded-l-lg ${
+                notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'
+              }`}></div>
+              <span className="text-2xl ml-2">
+                {notification.type === 'success' ? '✓' : '⚠️'}
+              </span>
+              <div className="flex-1">
+                <Title level={4} className={`mb-1 ${
+                  notification.type === 'success' ? 'text-green-400' : 'text-red-400'
+                }`}>
+                  {notification.title}
+                </Title>
+                <Text variant="secondary" size="sm">
+                  {notification.message}
+                </Text>
+              </div>
+              <Button onClick={hideNotification} variant="ghost" size="sm" className="hover:bg-gray-700 -mt-1">
+                ✕
+              </Button>
             </div>
-            <Button onClick={hideNotification} variant="ghost" size="sm" className="ml-2">
-              ✕
-            </Button>
-          </div>
+            {/* 진행 바 */}
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-700 rounded-b-lg overflow-hidden">
+              <div className={`h-full ${
+                notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'
+              } animate-progress`}></div>
+            </div>
         </div>
       )}
     </div>

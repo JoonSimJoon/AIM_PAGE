@@ -7,39 +7,47 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    console.log('Next.js API Route: 멤버 수정 시작', params.id)
+    console.log('Next.js API Route: 모집 공고 수정')
+    console.log('모집 공고 ID:', params.id)
     
     const token = request.headers.get('authorization')
     if (!token) {
-      return NextResponse.json({ error: '인증 토큰이 필요합니다.' }, { status: 401 })
+      return NextResponse.json(
+        { error: '인증 토큰이 필요합니다.' }, 
+        { status: 401 }
+      )
     }
-    
+
     const body = await request.json()
+    console.log('수정 데이터:', body)
     
-    const response = await fetch(`${BACKEND_URL}/api/members/admin/${params.id}`, {
+    const response = await fetch(`${BACKEND_URL}/api/content/recruit/${params.id}`, {
       method: 'PUT',
       headers: {
-        'Authorization': token,
         'Content-Type': 'application/json',
+        'Authorization': token,
       },
       body: JSON.stringify(body),
     })
     
     if (!response.ok) {
-      const errorText = await response.text()
-      console.error('백엔드 API 호출 실패:', response.status, response.statusText, errorText)
+      console.error('백엔드 API 호출 실패:', response.status, response.statusText)
+      const errorData = await response.text()
+      console.error('백엔드 오류 응답:', errorData)
       return NextResponse.json(
-        { error: `백엔드 API 호출 실패: ${response.status} ${response.statusText}` }, 
+        { error: '백엔드 API 호출 실패' }, 
         { status: response.status }
       )
     }
     
     const data = await response.json()
+    console.log('모집 공고 수정 완료:', data)
+    
     return NextResponse.json(data)
   } catch (error) {
     console.error('API Route 오류:', error)
     return NextResponse.json(
-      { error: `서버 내부 오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}` }, 
+      { error: '서버 내부 오류가 발생했습니다.' }, 
       { status: 500 }
     )
   }
@@ -50,36 +58,40 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    console.log('Next.js API Route: 멤버 삭제 시작', params.id)
+    console.log('Next.js API Route: 모집 공고 삭제')
+    console.log('모집 공고 ID:', params.id)
     
     const token = request.headers.get('authorization')
     if (!token) {
-      return NextResponse.json({ error: '인증 토큰이 필요합니다.' }, { status: 401 })
+      return NextResponse.json(
+        { error: '인증 토큰이 필요합니다.' }, 
+        { status: 401 }
+      )
     }
     
-    const response = await fetch(`${BACKEND_URL}/api/members/admin/${params.id}`, {
+    const response = await fetch(`${BACKEND_URL}/api/content/recruit/${params.id}`, {
       method: 'DELETE',
       headers: {
         'Authorization': token,
-        'Content-Type': 'application/json',
       },
     })
     
     if (!response.ok) {
-      const errorText = await response.text()
-      console.error('백엔드 API 호출 실패:', response.status, response.statusText, errorText)
+      console.error('백엔드 API 호출 실패:', response.status, response.statusText)
       return NextResponse.json(
-        { error: `백엔드 API 호출 실패: ${response.status} ${response.statusText}` }, 
+        { error: '백엔드 API 호출 실패' }, 
         { status: response.status }
       )
     }
     
     const data = await response.json()
+    console.log('모집 공고 삭제 완료:', data)
+    
     return NextResponse.json(data)
   } catch (error) {
     console.error('API Route 오류:', error)
     return NextResponse.json(
-      { error: `서버 내부 오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}` }, 
+      { error: '서버 내부 오류가 발생했습니다.' }, 
       { status: 500 }
     )
   }

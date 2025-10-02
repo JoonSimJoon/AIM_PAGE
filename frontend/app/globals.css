@@ -301,4 +301,48 @@
   .aim-hover-card-purple {
     @apply hover:border-purple-500 transition-colors;
   }
+  
+  /* 알림 애니메이션 */
+  @keyframes slide-in-right {
+    from {
+      transform: translateX(120%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes slide-out-right {
+    from {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    to {
+      transform: translateX(120%);
+      opacity: 0;
+    }
+  }
+  
+  @keyframes progress {
+    from {
+      width: 100%;
+    }
+    to {
+      width: 0%;
+    }
+  }
+  
+  .animate-slide-in-right {
+    animation: slide-in-right 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+  
+  .animate-slide-out-right {
+    animation: slide-out-right 0.3s cubic-bezier(0.6, -0.28, 0.735, 0.045);
+  }
+  
+  .animate-progress {
+    animation: progress 3s linear;
+  }
 }

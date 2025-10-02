@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001'
+const BACKEND_URL = process.env.BACKEND_URL || 'http://aim-page-backend:3001'
 
 export async function GET(request: NextRequest) {
   try {
     console.log('Next.js API Route: 소개 섹션 조회')
     
-    const response = await fetch(`${BACKEND_URL}/api/content/about/sections`, {
+    const backendUrl = `${BACKEND_URL}/api/content/about/sections`
+    console.log('호출하는 백엔드 URL:', backendUrl)
+    
+    const response = await fetch(backendUrl, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -23,8 +26,13 @@ export async function GET(request: NextRequest) {
     
     const data = await response.json()
     console.log('소개 섹션:', data.length, '개')
+    console.log('받은 데이터:', JSON.stringify(data, null, 2))
     
-    return NextResponse.json(data)
+    const nextResponse = NextResponse.json(data)
+    nextResponse.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+    nextResponse.headers.set('Pragma', 'no-cache')
+    nextResponse.headers.set('Expires', '0')
+    return nextResponse
   } catch (error) {
     console.error('API Route 오류:', error)
     return NextResponse.json(
