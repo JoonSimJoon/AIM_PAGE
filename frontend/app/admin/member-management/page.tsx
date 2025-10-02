@@ -38,6 +38,8 @@ export default function MemberManagement() {
   const [members, setMembers] = useState<Member[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deletingMember, setDeletingMember] = useState<Member | null>(null)
   const [editingMember, setEditingMember] = useState<Member | null>(null)
   const [formData, setFormData] = useState<EditMemberData>({
     name: '',
@@ -58,13 +60,15 @@ export default function MemberManagement() {
     message?: string
     confirmText?: string
     onConfirm?: () => void
+    hiding?: boolean
   }>({
     show: false,
     type: 'info',
     title: '',
     message: '',
     confirmText: '',
-    onConfirm: undefined
+    onConfirm: undefined,
+    hiding: false
   })
 
   const validateEmailDomain = (email: string): boolean => {
@@ -90,19 +94,32 @@ export default function MemberManagement() {
       title,
       message,
       confirmText,
-      onConfirm
+      onConfirm,
+      hiding: false
     })
+    
+    // 확인 버튼이 없는 경우 3초 후 자동으로 사라지게 설정
+    if (!confirmText) {
+      setTimeout(() => {
+        hideNotification()
+      }, 3000)
+    }
   }
 
   const hideNotification = () => {
-    setNotification({
-      show: false,
-      type: 'info',
-      title: '',
-      message: '',
-      confirmText: '',
-      onConfirm: undefined
-    })
+    setNotification(prev => ({ ...prev, hiding: true }))
+    // 애니메이션 후 완전히 제거
+    setTimeout(() => {
+      setNotification({
+        show: false,
+        type: 'info',
+        title: '',
+        message: '',
+        confirmText: '',
+        onConfirm: undefined,
+        hiding: false
+      })
+    }, 300)
   }
 
   const handleNotificationConfirm = () => {
@@ -233,14 +250,22 @@ export default function MemberManagement() {
     }
   }
 
-  const handleDelete = async (member: Member) => {
-    showNotification('warning', '삭제 확인', `정말로 ${member.name}님을 삭제하시겠습니까?`, '삭제', () => performDelete(member))
+  const openDeleteModal = (member: Member) => {
+    setDeletingMember(member)
+    setShowDeleteModal(true)
   }
 
-  const performDelete = async (member: Member) => {
+  const closeDeleteModal = () => {
+    setShowDeleteModal(false)
+    setDeletingMember(null)
+  }
+
+  const confirmDelete = async () => {
+    if (!deletingMember) return
+
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`/api/members/admin/${member.id}`, {
+      const response = await fetch(`http://localhost:3001/api/members/admin/${deletingMember.id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -249,6 +274,7 @@ export default function MemberManagement() {
 
       if (response.ok) {
         showNotification('success', '삭제 완료', '멤버가 삭제되었습니다.')
+        closeDeleteModal()
         fetchMembers()
       } else {
         const errorData = await response.json()
@@ -259,6 +285,7 @@ export default function MemberManagement() {
       showNotification('error', '오류 발생', '멤버 삭제 중 오류가 발생했습니다.')
     }
   }
+
 
   if (loading) {
     return (
@@ -306,7 +333,7 @@ export default function MemberManagement() {
                   ✏️ 편집
                 </button>
                 <button
-                  onClick={() => handleDelete(member)}
+                  onClick={() => openDeleteModal(member)}
                   className="text-red-400 hover:text-red-300 text-sm px-2 py-1 bg-gray-700 rounded border border-gray-600 hover:border-red-500 transition-colors"
                 >
                   🗑️ 삭제
@@ -499,64 +526,147 @@ export default function MemberManagement() {
         </div>
       </Modal>
 
-      {/* 통합 알림 대화상자 */}
+      {/* 알림 */}
       {notification.show && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
-          <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 max-w-md w-full mx-4">
-            <div className="flex items-center mb-4">
-              {notification.type === 'success' && (
-                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center mr-3">
-                  <span className="text-white text-sm">✓</span>
+        <>
+          {/* 중앙 모달 (확인 버튼이 있는 경우) */}
+          {notification.confirmText && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
+              <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 max-w-md w-full mx-4">
+                <div className="flex items-center mb-4">
+                  {notification.type === 'success' && (
+                    <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center mr-3">
+                      <span className="text-white text-sm">✓</span>
+                    </div>
+                  )}
+                  {notification.type === 'error' && (
+                    <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center mr-3">
+                      <span className="text-white text-sm">✕</span>
+                    </div>
+                  )}
+                  {notification.type === 'warning' && (
+                    <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center mr-3">
+                      <span className="text-white text-sm">⚠</span>
+                    </div>
+                  )}
+                  {notification.type === 'info' && (
+                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center mr-3">
+                      <span className="text-white text-sm">ℹ</span>
+                    </div>
+                  )}
+                  <Title level={4} className="text-white">
+                    {notification.title}
+                  </Title>
                 </div>
-              )}
-              {notification.type === 'error' && (
-                <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center mr-3">
-                  <span className="text-white text-sm">✕</span>
+                {notification.message && (
+                  <Text variant="secondary" className="mb-4">
+                    {notification.message}
+                  </Text>
+                )}
+                <div className="flex justify-end space-x-3">
+                  <button
+                    onClick={handleNotificationConfirm}
+                    className={`px-4 py-2 text-white rounded-lg font-medium transition-colors ${
+                      notification.type === 'error' ? 'bg-red-600 hover:bg-red-700' :
+                      notification.type === 'warning' ? 'bg-yellow-600 hover:bg-yellow-700' :
+                      notification.type === 'success' ? 'bg-green-600 hover:bg-green-700' :
+                      'bg-cyan-600 hover:bg-cyan-700'
+                    }`}
+                  >
+                    {notification.confirmText}
+                  </button>
+                  <button
+                    onClick={hideNotification}
+                    className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                  >
+                    취소
+                  </button>
                 </div>
-              )}
-              {notification.type === 'warning' && (
-                <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center mr-3">
-                  <span className="text-white text-sm">⚠</span>
-                </div>
-              )}
-              {notification.type === 'info' && (
-                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center mr-3">
-                  <span className="text-white text-sm">ℹ</span>
-                </div>
-              )}
-              <Title level={4} className="text-white">
-                {notification.title}
-              </Title>
+              </div>
             </div>
-            {notification.message && (
-              <Text variant="secondary" className="mb-4">
-                {notification.message}
-              </Text>
-            )}
-            <div className="flex justify-end space-x-3">
-              {notification.confirmText && (
-                <button
-                  onClick={handleNotificationConfirm}
-                  className={`px-4 py-2 text-white rounded-lg font-medium transition-colors ${
-                    notification.type === 'error' ? 'bg-red-600 hover:bg-red-700' :
-                    notification.type === 'warning' ? 'bg-yellow-600 hover:bg-yellow-700' :
-                    notification.type === 'success' ? 'bg-green-600 hover:bg-green-700' :
-                    'bg-cyan-600 hover:bg-cyan-700'
-                  }`}
-                >
-                  {notification.confirmText}
-                </button>
-              )}
-              <button
-                onClick={hideNotification}
-                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-              >
-                {notification.onConfirm ? '취소' : '확인'}
-              </button>
+          )}
+
+          {/* 우상단 토스트 (자동 사라짐) */}
+          {!notification.confirmText && (
+            <div className={`fixed top-4 right-4 z-50 bg-gray-800 border ${
+              notification.type === 'success' ? 'border-green-500' : 
+              notification.type === 'error' ? 'border-red-500' :
+              notification.type === 'warning' ? 'border-yellow-500' :
+              'border-blue-500'
+            } rounded-lg p-4 w-80 shadow-2xl ${
+              notification.hiding ? 'animate-slide-out-right' : 'animate-slide-in-right'
+            }`}>
+              <div className="flex items-start gap-3">
+                <div className={`w-1 h-full absolute left-0 top-0 bottom-0 rounded-l-lg ${
+                  notification.type === 'success' ? 'bg-green-500' : 
+                  notification.type === 'error' ? 'bg-red-500' :
+                  notification.type === 'warning' ? 'bg-yellow-500' :
+                  'bg-blue-500'
+                }`}></div>
+                <span className="text-2xl ml-2">
+                  {notification.type === 'success' ? '✓' : 
+                   notification.type === 'error' ? '⚠️' :
+                   notification.type === 'warning' ? '⚠️' :
+                   'ℹ️'}
+                </span>
+                <div className="flex-1">
+                  <Title level={4} className={`mb-1 ${
+                    notification.type === 'success' ? 'text-green-400' : 
+                    notification.type === 'error' ? 'text-red-400' :
+                    notification.type === 'warning' ? 'text-yellow-400' :
+                    'text-blue-400'
+                  }`}>
+                    {notification.title}
+                  </Title>
+                  {notification.message && (
+                    <Text variant="secondary" size="sm">
+                      {notification.message}
+                    </Text>
+                  )}
+                </div>
+                <Button onClick={hideNotification} variant="ghost" size="sm" className="hover:bg-gray-700 -mt-1">
+                  ✕
+                </Button>
+              </div>
+              {/* 진행 바 */}
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-700 rounded-b-lg overflow-hidden">
+                <div className={`h-full ${
+                  notification.type === 'success' ? 'bg-green-500' : 
+                  notification.type === 'error' ? 'bg-red-500' :
+                  notification.type === 'warning' ? 'bg-yellow-500' :
+                  'bg-blue-500'
+                } animate-progress`}></div>
+              </div>
             </div>
-          </div>
-        </div>
+          )}
+        </>
       )}
+
+      {/* 삭제 확인 모달 */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={closeDeleteModal}
+        submitText="삭제"
+        onSubmit={confirmDelete}
+        title="삭제 확인"
+      >
+        <div className="space-y-4">
+          <Text className="text-white">
+            {deletingMember && (
+              <>
+                <span className="font-semibold text-red-400">
+                  "{deletingMember.name}"
+                </span>
+                님을 삭제하시겠습니까?
+              </>
+            )}
+          </Text>
+          <Text variant="secondary" size="sm">
+            이 작업은 되돌릴 수 없습니다.
+          </Text>
+          
+        </div>
+      </Modal>
     </div>
   )
 }

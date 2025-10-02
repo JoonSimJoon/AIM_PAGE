@@ -1,5 +1,6 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 import { db } from '../utils/db';
 
 const router = express.Router();
@@ -272,12 +273,17 @@ router.post('/admin', authenticateAdmin, async (req, res) => {
       });
     }
 
+    // 이메일 앞부분을 초기 비밀번호로 사용
+    const initialPassword = email.split('@')[0];
+    const hashedPassword = await bcrypt.hash(initialPassword, 12);
+
     // 사용자 생성
     const newUser = await db.user.create({
       data: {
         name,
         email,
         role,
+        password: hashedPassword,
         createdAt: new Date(),
         updatedAt: new Date()
       }
@@ -311,6 +317,35 @@ router.post('/admin', authenticateAdmin, async (req, res) => {
 router.delete('/admin/:userId', authenticateAdmin, async (req, res) => {
   try {
     const { userId } = req.params;
+    const currentUserId = (req as any).user?.id;
+
+    if (currentUserId === userId) {
+      return res.status(403).json({ 
+        error: 'Cannot delete your own account',
+        message: '자신의 계정은 삭제할 수 없습니다.'
+      });
+    }
+    // 삭제하려는 사용자 정보 조회
+    const userToDelete = await db.user.findUnique({
+      where: { id: userId },
+      select: { email: true, role: true }
+    });
+
+    if (!userToDelete) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // 슈퍼계정 삭제 방지
+    const superAccounts = [
+      'aim2024@kookmin.ac.kr',
+    ];
+
+    if (superAccounts.includes(userToDelete.email)) {
+      return res.status(403).json({ 
+        error: 'Cannot delete super admin account',
+        message: '슈퍼관리자 계정은 삭제할 수 없습니다.'
+      });
+    }
 
     // 프로필 먼저 삭제
     await db.memberProfile.deleteMany({
