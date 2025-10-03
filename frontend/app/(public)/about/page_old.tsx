@@ -46,6 +46,7 @@ export default function AboutPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // 페이지 제목 설정
     document.title = 'About - AIM: AI Monsters'
     
     const storedUser = localStorage.getItem('user')
@@ -53,6 +54,7 @@ export default function AboutPage() {
       setUser(JSON.parse(storedUser))
     }
 
+    // 소개 데이터 로드
     fetchAboutData()
   }, [])
 
@@ -98,21 +100,6 @@ export default function AboutPage() {
     alert('로그아웃되었습니다.')
   }
 
-  const getColorClasses = (color: string) => {
-    const colorMap: { [key: string]: { border: string; text: string } } = {
-      'cyan': { border: 'hover:border-cyan-500', text: 'text-cyan-400' },
-      'pink': { border: 'hover:border-pink-500', text: 'text-pink-400' },
-      'yellow': { border: 'hover:border-yellow-500', text: 'text-yellow-400' },
-      'purple': { border: 'hover:border-purple-500', text: 'text-purple-400' },
-      'green': { border: 'hover:border-green-500', text: 'text-green-400' },
-      'blue': { border: 'hover:border-blue-500', text: 'text-blue-400' },
-      'red': { border: 'hover:border-red-500', text: 'text-red-400' },
-      'orange': { border: 'hover:border-orange-500', text: 'text-orange-400' }
-    }
-    
-    return colorMap[color] || colorMap['cyan']
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen bg-black">
@@ -125,6 +112,7 @@ export default function AboutPage() {
 
   return (
     <div className="min-h-screen bg-black">
+      {/* 네비게이션 */}
       <nav className="sticky top-0 z-50 bg-black border-b border-gray-800 backdrop-blur-sm bg-opacity-95">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
@@ -190,6 +178,7 @@ export default function AboutPage() {
         </div>
       </nav>
 
+      {/* 메인 컨텐츠 */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <Card className="p-8">
           <Title level={1} className="text-white mb-8">
@@ -199,6 +188,7 @@ export default function AboutPage() {
             동아리 소개
           </Title>
           
+          {/* 동아리 개요 - DB에서 가져온 섹션들 */}
           {sections.map((section) => (
             <section key={section.id} className="mb-8">
               <Title level={2} className="text-white mb-4">{section.title}</Title>
@@ -208,32 +198,28 @@ export default function AboutPage() {
             </section>
           ))}
 
+          {/* 활동 내용 - DB에서 가져온 활동들 */}
           {activities.length > 0 && (
             <section className="mb-8">
               <Title level={2} className="text-white mb-4">주요 활동</Title>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {activities.map((activity) => {
-                  const colorClasses = getColorClasses(activity.color)
-                  return (
-                    <Card 
-                      key={activity.id} 
-                      className={`border border-gray-600 bg-gray-700 ${colorClasses.border} transition-colors`}
-                    >
-                      <div className="p-4">
-                        <Title level={3} className={`text-lg mb-2 ${colorClasses.text}`}>
-                          {activity.icon} {activity.title}
-                        </Title>
-                        <Text variant="secondary" size="sm">
-                          {activity.description}
-                        </Text>
-                      </div>
-                    </Card>
-                  )
-                })}
+                {activities.map((activity) => (
+                  <Card key={activity.id} className={`border border-gray-600 bg-gray-700 hover:border-${activity.color}-500 transition-colors`}>
+                    <div className="p-4">
+                      <Title level={3} className={`text-lg mb-2 text-${activity.color}-400`}>
+                        {activity.icon} {activity.title}
+                      </Title>
+                      <Text variant="secondary" size="sm">
+                        {activity.description}
+                      </Text>
+                    </div>
+                  </Card>
+                ))}
               </div>
             </section>
           )}
 
+          {/* 동아리 역사 - DB에서 가져온 연혁들 */}
           {history.length > 0 && (
             <section className="mb-8">
               <Title level={2} className="text-white mb-4">동아리 연혁</Title>
@@ -255,6 +241,7 @@ export default function AboutPage() {
             </section>
           )}
 
+          {/* 연락처 - DB에서 가져온 연락처들 */}
           {contacts.length > 0 && (
             <section>
               <Title level={2} className="text-white mb-4">Contact</Title>

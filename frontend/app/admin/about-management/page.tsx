@@ -341,7 +341,12 @@ export default function AboutManagementPage() {
                         item.color === 'cyan' ? 'bg-cyan-500 text-black' :
                         item.color === 'pink' ? 'bg-pink-500 text-white' :
                         item.color === 'yellow' ? 'bg-yellow-500 text-black' :
-                        'bg-purple-500 text-white'
+                        item.color === 'purple' ? 'bg-purple-500 text-white' :
+                        item.color === 'green' ? 'bg-green-500 text-white' :
+                        item.color === 'blue' ? 'bg-blue-500 text-white' :
+                        item.color === 'red' ? 'bg-red-500 text-white' :
+                        item.color === 'orange' ? 'bg-orange-500 text-white' :
+                        'bg-cyan-500 text-black'
                       }`}>
                         {item.color}
                       </span>
@@ -469,6 +474,10 @@ export default function AboutManagementPage() {
                 <option value="pink">Pink</option>
                 <option value="yellow">Yellow</option>
                 <option value="purple">Purple</option>
+                <option value="green">Green</option>
+                <option value="blue">Blue</option>
+                <option value="red">Red</option>
+                <option value="orange">Orange</option>
               </select>
             </div>
             
