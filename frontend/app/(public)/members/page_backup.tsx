@@ -12,7 +12,6 @@ interface Member {
     position?: string
     department?: string
     year?: string
-    generation?: number
     bio?: string
     avatarKey?: string
     links?: any
@@ -62,6 +61,7 @@ export default function MembersPage() {
     member.profile?.position === '부회장' ||
     member.profile?.position?.includes('팀장') || 
     ['기획팀장', '개발팀장', '홍보팀장'].includes(member.profile?.position || '') ||
+    member.profile?.position === '운영진' ||
     member.role === 'admin'
   )
   
@@ -89,9 +89,6 @@ export default function MembersPage() {
 
         {/* 세부 정보 */}
         <div className="space-y-1 text-sm text-gray-400 mb-4">
-          {member.profile?.generation && (
-            <p className="font-semibold text-pink-400">{member.profile.generation}기</p>
-          )}
           {member.profile?.department && <p>{member.profile.department}</p>}
           {member.profile?.year && <p>{member.profile.year}</p>}
         </div>

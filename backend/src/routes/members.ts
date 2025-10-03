@@ -62,6 +62,7 @@ router.get('/', async (req, res) => {
             position: true,
             department: true,
             year: true,
+            generation: true,
             bio: true,
             oneLiner: true,
             avatarKey: true,
@@ -101,6 +102,7 @@ router.get('/:id', async (req, res) => {
             position: true,
             department: true,
             year: true,
+            generation: true,
             bio: true,
             oneLiner: true,
             avatarKey: true,
@@ -160,6 +162,7 @@ router.get('/admin/all', authenticateAdmin, async (req, res) => {
             position: true,
             department: true,
             year: true,
+            generation: true,
             bio: true,
             isPublic: true
           }
@@ -189,7 +192,8 @@ router.put('/admin/:userId', authenticateAdmin, async (req, res) => {
       studentId, 
       position, 
       department, 
-      year, 
+      year,
+      generation,
       bio, 
       isPublic 
     } = req.body;
@@ -222,6 +226,7 @@ router.put('/admin/:userId', authenticateAdmin, async (req, res) => {
         position,
         department,
         year,
+        generation: generation ? parseInt(generation) : null,
         bio,
         isPublic: isPublic !== undefined ? isPublic : true
       },
@@ -231,6 +236,7 @@ router.put('/admin/:userId', authenticateAdmin, async (req, res) => {
         ...(position !== undefined && { position }),
         ...(department !== undefined && { department }),
         ...(year !== undefined && { year }),
+        ...(generation !== undefined && { generation: generation ? parseInt(generation) : null }),
         ...(bio !== undefined && { bio }),
         ...(isPublic !== undefined && { isPublic })
       }
@@ -257,7 +263,8 @@ router.post('/admin', authenticateAdmin, async (req, res) => {
       studentId, 
       position, 
       department, 
-      year, 
+      year,
+      generation,
       bio, 
       isPublic = true 
     } = req.body;
@@ -298,6 +305,7 @@ router.post('/admin', authenticateAdmin, async (req, res) => {
         position,
         department,
         year,
+        generation: generation ? parseInt(generation) : null,
         bio,
         isPublic
       }

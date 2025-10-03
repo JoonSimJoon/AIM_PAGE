@@ -16,7 +16,6 @@ interface Member {
     position?: string
     department?: string
     year?: string
-    generation?: number
     bio?: string
     isPublic: boolean
   } | null
@@ -31,7 +30,6 @@ interface EditMemberData {
   position: string
   department: string
   year: string
-  generation: number
   bio: string
   isPublic: boolean
 }
@@ -52,7 +50,6 @@ export default function MemberManagement() {
     position: '',
     department: '',
     year: '',
-    generation: 0,
     bio: '',
     isPublic: true
   })
@@ -176,7 +173,6 @@ export default function MemberManagement() {
       position: '',
       department: '',
       year: '',
-      generation: 0,
       bio: '',
       isPublic: true
     })
@@ -194,7 +190,6 @@ export default function MemberManagement() {
       position: member.profile?.position || '',
       department: member.profile?.department || '',
       year: member.profile?.year || '',
-      generation: member.profile?.generation || 0,
       bio: member.profile?.bio || '',
       isPublic: member.profile?.isPublic ?? true
     })
@@ -213,7 +208,6 @@ export default function MemberManagement() {
       position: '',
       department: '',
       year: '',
-      generation: 0,
       bio: '',
       isPublic: true
     })
@@ -364,11 +358,6 @@ export default function MemberManagement() {
                   {member.profile.department}
                 </Text>
               )}
-              {member.profile?.generation && (
-                <Text variant="muted" size="sm" className="font-semibold text-pink-400">
-                  {member.profile.generation}기
-                </Text>
-              )}
               {member.profile?.year && (
                 <Text variant="muted" size="sm">
                   {member.profile.year}
@@ -486,18 +475,6 @@ export default function MemberManagement() {
               <option value="4학년">4학년</option>
               <option value="대학원생">대학원생</option>
             </select>
-          </div>
-
-          <div>
-            <label className="block text-white font-medium mb-2">기수</label>
-            <input
-              type="number"
-              value={formData.generation || ""}
-              onChange={(e) => setFormData({...formData, generation: parseInt(e.target.value) || 0})}
-              className="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-              placeholder="기수를 입력하세요 (예: 1, 2, 3...)"
-              min="0"
-            />
           </div>
 
           <div>

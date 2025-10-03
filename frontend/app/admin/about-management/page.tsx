@@ -571,7 +571,7 @@ export default function AboutManagementPage() {
                 <option value="email">Email</option>
                 <option value="github">GitHub</option>
                 <option value="instagram">Instagram</option>
-                <option value="discord">Discord</option>
+                <option value="phone">Phone</option>
               </select>
               </div>
 

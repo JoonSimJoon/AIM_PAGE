@@ -12,7 +12,6 @@ interface Member {
     position?: string
     department?: string
     year?: string
-    generation?: number
     bio?: string
     avatarKey?: string
     links?: any
@@ -27,6 +26,7 @@ export default function MembersPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // 페이지 제목 설정
     document.title = 'Members - AIM: AI Monsters'
     
     const storedUser = localStorage.getItem('user')
@@ -34,6 +34,7 @@ export default function MembersPage() {
       setUser(JSON.parse(storedUser))
     }
 
+    // API에서 멤버 데이터 가져오기
     fetchMembers()
   }, [])
 
@@ -56,16 +57,20 @@ export default function MembersPage() {
     alert('로그아웃되었습니다.')
   }
 
-  // 역할별로 멤버 분류 - 운영진과 부원만
-  const executives = members.filter(member => 
-    member.profile?.position === '회장' || 
-    member.profile?.position === '부회장' ||
-    member.profile?.position?.includes('팀장') || 
-    ['기획팀장', '개발팀장', '홍보팀장'].includes(member.profile?.position || '') ||
-    member.role === 'admin'
+  // 역할별로 멤버 분류
+  const president = members.filter(member => 
+    member.profile?.position === '회장' || member.role === 'admin'
   )
-  
+  const vicePresident = members.filter(member => 
+    member.profile?.position === '부회장'
+  )
+  const executives = members.filter(member => 
+    member.profile?.position?.includes('팀장') || 
+    ['기획팀장', '개발팀장', '홍보팀장'].includes(member.profile?.position || '')
+  )
   const regularMembers = members.filter(member => 
+    !president.includes(member) && 
+    !vicePresident.includes(member) && 
     !executives.includes(member)
   )
 
@@ -89,9 +94,6 @@ export default function MembersPage() {
 
         {/* 세부 정보 */}
         <div className="space-y-1 text-sm text-gray-400 mb-4">
-          {member.profile?.generation && (
-            <p className="font-semibold text-pink-400">{member.profile.generation}기</p>
-          )}
           {member.profile?.department && <p>{member.profile.department}</p>}
           {member.profile?.year && <p>{member.profile.year}</p>}
         </div>
@@ -228,51 +230,78 @@ export default function MembersPage() {
         {/* 부원 목록 */}
         {!loading && members.length > 0 && (
           <>
-            {/* 운영진 */}
-            {executives.length > 0 && (
-              <section className="mb-16">
-                <div className="text-center mb-8">
-                  <h2 className="text-3xl font-bold text-white mb-2">운영진</h2>
-                  <div className="w-24 h-1 bg-cyan-500 mx-auto rounded"></div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {executives.map(member => (
-                    <MemberCard key={member.id} member={member} />
-                  ))}
-                </div>
-              </section>
-            )}
 
-            {/* 일반 부원 */}
-            {regularMembers.length > 0 && (
-              <section className="mb-16">
-                <div className="text-center mb-8">
-                  <h2 className="text-3xl font-bold text-white mb-2">부원</h2>
-                  <div className="w-24 h-1 bg-pink-500 mx-auto rounded"></div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {regularMembers.map(member => (
-                    <MemberCard key={member.id} member={member} />
-                  ))}
-                </div>
-              </section>
-            )}
+        {/* 회장 */}
+        <section className="mb-16">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-white mb-2">회장</h2>
+            <div className="w-24 h-1 bg-cyan-500 mx-auto rounded"></div>
+          </div>
+          <div className="flex justify-center">
+            <div className="w-full max-w-md">
+              {president.map(member => (
+                <MemberCard key={member.id} member={member} />
+              ))}
+            </div>
+          </div>
+        </section>
 
-            {/* 가입 안내 */}
-            <section className="bg-gradient-to-r from-cyan-600 to-pink-600 rounded-2xl p-8 text-center text-white">
-              <h2 className="text-3xl font-bold mb-4">AI Monsters에 합류하세요!</h2>
-              <p className="text-xl mb-6">
-                AI와 머신러닝에 관심이 있다면 언제든 환영합니다. 
-                함께 학습하고 성장할 수 있는 기회를 놓치지 마세요.
-              </p>
-              <Link 
-                href="/recruit" 
-                className="inline-block bg-white text-black font-bold py-3 px-8 rounded-lg hover:shadow-lg hover:shadow-white/25 transform hover:-translate-y-1 transition-all duration-300"
-              >
-                모집 공고 보기
-              </Link>
-            </section>
-          </>
+        {/* 부회장 */}
+        <section className="mb-16">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-white mb-2">부회장</h2>
+            <div className="w-24 h-1 bg-pink-500 mx-auto rounded"></div>
+          </div>
+          <div className="flex justify-center">
+            <div className="w-full max-w-md">
+              {vicePresident.map(member => (
+                <MemberCard key={member.id} member={member} />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* 운영진 */}
+        <section className="mb-16">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-white mb-2">운영진</h2>
+            <div className="w-24 h-1 bg-yellow-500 mx-auto rounded"></div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {executives.map(member => (
+              <MemberCard key={member.id} member={member} />
+            ))}
+          </div>
+        </section>
+
+        {/* 일반 부원 */}
+        <section className="mb-16">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-white mb-2">부원</h2>
+            <div className="w-24 h-1 bg-purple-500 mx-auto rounded"></div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {regularMembers.map(member => (
+              <MemberCard key={member.id} member={member} />
+            ))}
+          </div>
+        </section>
+
+        {/* 가입 안내 */}
+        <section className="bg-gradient-to-r from-cyan-600 to-pink-600 rounded-2xl p-8 text-center text-white">
+          <h2 className="text-3xl font-bold mb-4">AI Monsters에 합류하세요!</h2>
+          <p className="text-xl mb-6">
+            AI와 머신러닝에 관심이 있다면 언제든 환영합니다. 
+            함께 학습하고 성장할 수 있는 기회를 놓치지 마세요.
+          </p>
+          <Link 
+            href="/recruit" 
+            className="inline-block bg-white text-black font-bold py-3 px-8 rounded-lg hover:shadow-lg hover:shadow-white/25 transform hover:-translate-y-1 transition-all duration-300"
+          >
+            모집 공고 보기
+          </Link>
+        </section>
+        </>
         )}
       </main>
 
