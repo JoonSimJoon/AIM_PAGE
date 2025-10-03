@@ -1,13 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import dynamic from 'next/dynamic'
-import { Button, Text, Title, Loading, Modal } from '@/components/ui'
-
-const MDEditor = dynamic(
-  () => import('@uiw/react-md-editor').then((mod) => mod.default),
-  { ssr: false }
-)
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import { Button, Card, Text, Title, Subtitle, Loading, Modal } from '@/components/ui'
 
 interface RecruitNotice {
   id: string
@@ -510,22 +506,30 @@ AIM(AI Monsters)은 인공지능과 머신러닝에 관심 있는 학생들이 �
           </div>
         </div>
 
-        {/* 마크다운 에디터 - react-md-editor 사용 */}
-        <div className="mb-6">
-          <div className="flex justify-between items-center mb-2">
-            <label className="block text-white font-medium">상세 내용 (Markdown) *</label>
-            <Button type="button" onClick={loadTemplate} variant="ghost" size="sm">
-              템플릿 로드
-            </Button>
-          </div>
-          <div data-color-mode="dark">
-            <MDEditor
+        {/* 마크다운 에디터 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div>
+            <div className="flex justify-between items-center mb-2">
+              <label className="block text-white font-medium">상세 내용 (Markdown) *</label>
+              <Button type="button" onClick={loadTemplate} variant="ghost" size="sm">
+                템플릿 로드
+              </Button>
+            </div>
+            <textarea
               value={formData.bodyMd}
-              onChange={(val) => setFormData({...formData, bodyMd: val || ''})}
-              height={400}
-              preview="live"
-              hideToolbar={false}
+              onChange={(e) => setFormData({...formData, bodyMd: e.target.value})}
+              className="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent h-96 resize-none"
+              placeholder="Markdown 형식으로 모집 공고 내용을 작성하세요..."
+              required
             />
+          </div>
+          <div>
+            <label className="block text-white font-medium mb-2">미리보기</label>
+            <div className="bg-gray-800 border border-gray-600 rounded-lg p-4 h-96 overflow-y-auto">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {formData.bodyMd || '*내용을 입력하면 여기에 미리보기가 표시됩니다.*'}
+              </ReactMarkdown>
+            </div>
           </div>
         </div>
 
