@@ -1,73 +1,60 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/contexts/AuthContext'
+import { authGet } from '@/lib/api-client'
 
 interface AdminLayoutProps {
   children: React.ReactNode
 }
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
-  const [user, setUser] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
+  const { user, logout, isAdmin, isAuthenticated, isLoading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
     const checkAdminAuth = async () => {
-      const storedUser = localStorage.getItem('user')
-      const token = localStorage.getItem('token')
+      if (isLoading) return // 로딩 중이면 대기
 
-      if (!storedUser || !token) {
-        console.log('토큰 또는 사용자 정보가 없습니다.')
+      if (!isAuthenticated) {
+        console.log('인증되지 않은 사용자입니다.')
         router.push('/login')
         return
       }
 
+      if (!isAdmin) {
+        alert('관리자 권한이 필요합니다.')
+        router.push('/')
+        return
+      }
+
+      // 토큰 유효성 검증을 위해 간단한 API 호출
       try {
-        const userData = JSON.parse(storedUser)
-        if (userData.role !== 'admin') {
-          alert('관리자 권한이 필요합니다.')
-          router.push('/')
-          return
-        }
-
-        // 토큰 유효성 검증을 위해 간단한 API 호출
-        const response = await fetch('/api/members/admin/all', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        })
-
+        const response = await authGet('/api/members/admin/all')
         if (response.status === 401) {
           console.log('토큰이 만료되었거나 유효하지 않습니다.')
-          localStorage.removeItem('token')
-          localStorage.removeItem('user')
+          logout()
           router.push('/login')
-          return
         }
-
-        setUser(userData)
-        setLoading(false)
       } catch (error) {
         console.error('인증 확인 중 오류:', error)
-        localStorage.removeItem('token')
-        localStorage.removeItem('user')
+        logout()
         router.push('/login')
       }
     }
 
     checkAdminAuth()
-  }, [router])
+  }, [isAuthenticated, isAdmin, isLoading, router, logout])
 
   const handleLogout = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    setUser(null)
-    router.push('/')
+    if (confirm('로그아웃하시겠습니까?')) {
+      logout()
+    }
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500"></div>
@@ -75,7 +62,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     )
   }
 
-  if (!user) {
+  if (!isAuthenticated || !isAdmin) {
     return null
   }
 
@@ -133,7 +120,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               </Link>
               <div className="flex items-center space-x-3">
                 <span className="text-white">
-                  {user.name}님
+                  {user?.name}님
                   <span className="ml-1 text-xs bg-pink-600 text-white px-2 py-1 rounded">
                     관리자
                   </span>

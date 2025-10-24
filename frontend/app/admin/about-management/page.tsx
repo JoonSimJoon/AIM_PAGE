@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { Button, Card, Text, Title, Subtitle, Loading, Modal } from '@/components/ui'
+import { authGet, authPost, authPut, authDelete } from '@/lib/api-client'
+import { APP_NAME } from '@/lib/config'
 
 interface AboutSection {
   id: string
@@ -59,6 +61,7 @@ export default function AboutManagementPage() {
     year?: number
     label?: string
     value?: string
+    type?: string
     order?: number
   }>({})
   const [notification, setNotification] = useState<{
@@ -76,7 +79,7 @@ export default function AboutManagementPage() {
   })
 
   useEffect(() => {
-    document.title = '소개 관리 - AIM: AI Monsters'
+    document.title = `소개 관리 - ${APP_NAME}`
   }, [])
 
   useEffect(() => {
@@ -86,12 +89,7 @@ export default function AboutManagementPage() {
   const fetchData = async () => {
     try {
       setLoading(true)
-      const token = localStorage.getItem('token')
-      const response = await fetch(`http://localhost:3001/api/content/about/${activeTab}/admin`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
+      const response = await authGet(`/api/content/about/${activeTab}/admin`)
       if (response.ok) {
         const data = await response.json()
         switch (activeTab) {
@@ -150,13 +148,7 @@ export default function AboutManagementPage() {
     if (!deletingItem) return
 
     try {
-      const token = localStorage.getItem('token')
-      const response = await fetch(`http://localhost:3001/api/content/about/${activeTab}/${deletingItem.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
+      const response = await authDelete(`/api/content/about/${activeTab}/${deletingItem.id}`)
       
       if (response.ok) {
         showNotification({
@@ -188,21 +180,13 @@ export default function AboutManagementPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      const token = localStorage.getItem('token')
-      const url = editingItem 
-        ? `http://localhost:3001/api/content/about/${activeTab}/${editingItem.id}`
-        : `http://localhost:3001/api/content/about/${activeTab}`
+      const endpoint = editingItem 
+        ? `/api/content/about/${activeTab}/${editingItem.id}`
+        : `/api/content/about/${activeTab}`
       
-      const method = editingItem ? 'PUT' : 'POST'
-      
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(formData)
-      })
+      const response = editingItem
+        ? await authPut(endpoint, formData)
+        : await authPost(endpoint, formData)
 
       if (response.ok) {
         showNotification({

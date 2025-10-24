@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-
-const BACKEND_URL = process.env.BACKEND_URL || 'http://aim-page-backend:3001'
+import { BACKEND_URL } from '@/lib/api-config'
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,6 +10,7 @@ export async function GET(request: NextRequest) {
       headers: {
         'Content-Type': 'application/json',
       },
+      cache: 'no-store', // 캐시 비활성화
     })
     
     if (!response.ok) {
@@ -24,7 +24,13 @@ export async function GET(request: NextRequest) {
     const data = await response.json()
     console.log('지난 모집 공고:', data.length, '개')
     
-    return NextResponse.json(data)
+    // 캐시 방지 헤더 추가
+    const responseHeaders = new Headers()
+    responseHeaders.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+    responseHeaders.set('Pragma', 'no-cache')
+    responseHeaders.set('Expires', '0')
+    
+    return NextResponse.json(data, { headers: responseHeaders })
   } catch (error) {
     console.error('API Route 오류:', error)
     return NextResponse.json(

@@ -7,9 +7,11 @@
 - **Frontend**: Next.js 14 (App Router), TypeScript, Tailwind CSS
 - **Backend**: Express.js + TypeScript
 - **Database**: PostgreSQL (Supabase)
-- **Authentication**: JWT
+- **Authentication**: JWT (with React Context API)
 - **Storage**: AWS S3 + CloudFront
 - **ORM**: Prisma
+- **State Management**: React Context API
+- **API Client**: Centralized API client with environment-based URLs
 
 ## 프로젝트 구조
 
@@ -132,12 +134,71 @@ npm run dev
 - 모집 공고 관리
 - 전체 콘텐츠 관리
 
+## 아키텍처 개선 사항
+
+### ✅ 최근 개선 완료 (2025년 10월)
+
+#### 1. **중앙화된 API 클라이언트**
+- ❌ Before: 하드코딩된 `http://localhost:3001` URL 34개 파일에 분산
+- ✅ After: `lib/api-client.ts`로 모든 API 호출 통합
+- **혜택**: 
+  - 환경 변수로 API URL 관리
+  - 자동 인증 토큰 추가
+  - 일관된 에러 처리
+  - 배포 환경별 URL 자동 전환
+
+```typescript
+// Before
+fetch('http://localhost:3001/api/members', {
+  headers: { 'Authorization': `Bearer ${token}` }
+})
+
+// After
+import { authGet } from '@/lib/api-client'
+authGet('/api/members')
+```
+
+#### 2. **전역 인증 상태 관리 (Auth Context)**
+- ❌ Before: 27개 파일에서 `localStorage` 직접 접근
+- ✅ After: React Context API로 전역 인증 상태 관리
+- **혜택**:
+  - 단일 진실 공급원 (Single Source of Truth)
+  - 자동 로그인/로그아웃 처리
+  - 인증 상태 동기화
+  - 코드 중복 제거
+
+```typescript
+// Before
+const token = localStorage.getItem('token')
+const user = JSON.parse(localStorage.getItem('user'))
+
+// After
+import { useAuth } from '@/contexts/AuthContext'
+const { user, token, isAuthenticated, isAdmin, login, logout } = useAuth()
+```
+
+#### 3. **백업 파일 정리**
+- 7개 불필요한 백업 파일 제거 (`.bak`, `_old`, `_backup`)
+- 프로젝트 구조 정리 및 혼란 방지
+
+### 🎯 다음 단계 개선 권장사항
+
+1. **Metadata API 적용** - SEO 개선 (Server Components 전환 필요)
+2. **Image 최적화** - `next/image` 사용으로 성능 향상
+3. **Error Boundary** - 전역 에러 처리
+4. **Loading States** - Suspense Boundary 적용
+
 ## 배포
 
 Vercel에 배포하는 것을 권장합니다:
 
 ```bash
 npm run build
+```
+
+**환경 변수 설정:**
+```bash
+NEXT_PUBLIC_API_URL=https://your-backend-api.com
 ```
 
 ## 라이센스

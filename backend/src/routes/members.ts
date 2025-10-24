@@ -85,6 +85,168 @@ router.get('/', async (req, res) => {
   }
 });
 
+// ===== 인증된 사용자 전용 API (본인 프로필) =====
+// 주의: 이 라우트들은 /:id 보다 앞에 정의되어야 합니다!
+
+// 본인 프로필 조회 (인증된 사용자)
+router.get('/me', async (req: any, res) => {
+  try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+      return res.status(401).json({ error: 'Access token required' });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any;
+    console.log('Decoded token userId:', decoded.userId);
+    
+    const user = await db.user.findUnique({
+      where: { id: decoded.userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true
+      }
+    });
+
+    console.log('Found user:', user ? user.id : 'null');
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const profile = await db.memberProfile.findUnique({
+      where: { userId: user.id },
+      select: {
+        id: true,
+        displayName: true,
+        studentId: true,
+        position: true,
+        department: true,
+        year: true,
+        generation: true,
+        bio: true,
+        isPublic: true
+      }
+    });
+
+    res.json({ ...user, profile });
+  } catch (error) {
+    console.error('Error fetching own profile:', error);
+    res.status(401).json({ error: 'Invalid token' });
+  }
+});
+
+// 본인 프로필 수정 (인증된 사용자)
+router.put('/me', async (req: any, res) => {
+  try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+      return res.status(401).json({ error: 'Access token required' });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any;
+    const userId = decoded.userId;
+
+    const {
+      displayName,
+      studentId,
+      position,
+      department,
+      year,
+      generation,
+      bio,
+      isPublic
+    } = req.body;
+
+    // 프로필이 없으면 생성, 있으면 업데이트
+    const profile = await db.memberProfile.upsert({
+      where: { userId },
+      create: {
+        userId,
+        displayName: displayName || '',
+        studentId,
+        position,
+        department,
+        year,
+        generation: generation ? parseInt(generation) : null,
+        bio,
+        isPublic: isPublic ?? true
+      },
+      update: {
+        displayName: displayName || '',
+        studentId,
+        position,
+        department,
+        year,
+        generation: generation ? parseInt(generation) : null,
+        bio,
+        isPublic: isPublic ?? true
+      }
+    });
+
+    res.json(profile);
+  } catch (error) {
+    console.error('Error updating own profile:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// 본인 비밀번호 변경 (인증된 사용자)
+router.put('/me/password', async (req: any, res) => {
+  try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+      return res.status(401).json({ error: 'Access token required' });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any;
+    const userId = decoded.userId;
+
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Current password and new password are required' });
+    }
+
+    // 현재 사용자 조회
+    const user = await db.user.findUnique({
+      where: { id: userId }
+    });
+
+    if (!user || !user.password) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // 현재 비밀번호 확인
+    const isValidPassword = await bcrypt.compare(currentPassword, user.password);
+    if (!isValidPassword) {
+      return res.status(400).json({ error: '현재 비밀번호가 일치하지 않습니다.' });
+    }
+
+    // 새 비밀번호 해시
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+    // 비밀번호 업데이트
+    await db.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword }
+    });
+
+    res.json({ message: 'Password updated successfully' });
+  } catch (error) {
+    console.error('Error changing password:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // 특정 멤버 프로필 조회
 router.get('/:id', async (req, res) => {
   try {

@@ -2,6 +2,8 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { authGet } from '@/lib/api-client'
+import { APP_NAME } from '@/lib/config'
 
 interface DashboardStats {
   totalMembers: number
@@ -20,22 +22,14 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // 페이지 제목 설정
-    document.title = 'Admin Dashboard - AIM: AI Monsters'
-    
+    document.title = `Admin Dashboard - ${APP_NAME}`
     fetchDashboardStats()
   }, [])
 
   const fetchDashboardStats = async () => {
     try {
-      const token = localStorage.getItem('token')
-      
       // 멤버 수 조회
-      const membersResponse = await fetch('http://localhost:3001/api/members/admin/all', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
+      const membersResponse = await authGet('/api/members/admin/all')
       
       if (membersResponse.ok) {
         const members = await membersResponse.json()

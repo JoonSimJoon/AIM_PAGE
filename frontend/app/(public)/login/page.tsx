@@ -2,15 +2,20 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { post } from '@/lib/api-client'
+import { APP_NAME } from '@/lib/config'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const { login } = useAuth()
+  const router = useRouter()
 
-  // 페이지 제목 설정
   useEffect(() => {
-    document.title = 'Login - AIM: AI Monsters'
+    document.title = `Login - ${APP_NAME}`
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -18,25 +23,17 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const response = await fetch('http://localhost:3001/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      })
-
+      const response = await post('/api/auth/login', { email, password })
       const data = await response.json()
 
       if (response.ok) {
-        // 토큰을 localStorage에 저장
-        localStorage.setItem('token', data.token)
-        localStorage.setItem('user', JSON.stringify(data.user))
+        // Auth Context를 통해 로그인 처리
+        login(data.token, data.user)
         
         alert(`로그인 성공! ${data.user.name}님 환영합니다.`)
         
         // 메인 페이지로 리다이렉트
-        window.location.href = '/'
+        router.push('/')
       } else {
         alert(data.error || '로그인에 실패했습니다.')
       }

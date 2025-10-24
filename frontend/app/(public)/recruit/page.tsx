@@ -4,26 +4,11 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { get } from '@/lib/api-client'
+import { APP_NAME } from '@/lib/config'
 
 // UI Components
 import { Button, Card, Badge, Text, Title, Subtitle, Loading, FAQ } from '@/components/ui'
-
-// Navigation Link Component
-const NavLink: React.FC<{ href: string; active?: boolean; children: React.ReactNode }> = ({ 
-  href, 
-  active = false, 
-  children 
-}) => {
-  const linkClasses = active 
-    ? 'text-cyan-400 font-medium' 
-    : 'text-gray-300 hover:text-cyan-400 transition-colors'
-    
-  return (
-    <Link href={href} className={linkClasses}>
-      {children}
-    </Link>
-  )
-}
 
 interface RecruitNotice {
   id: string
@@ -120,72 +105,8 @@ export default function RecruitPage() {
     }
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    setUser(null)
-    alert('로그아웃되었습니다.')
-  }
-
   return (
     <div className="min-h-screen bg-black">
-      {/* 네비게이션 */}
-      <nav className="sticky top-0 z-50 bg-black border-b border-gray-800 backdrop-blur-sm bg-opacity-95">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <Link href="/" className="flex items-center space-x-3">
-                <img 
-                  src="/images/aim_logo.png" 
-                  alt="AIM 로고" 
-                  className="h-8 w-auto object-contain"
-                />
-                <span className="text-xl font-bold text-white">AIM</span>
-                <span className="text-sm text-gray-400 ml-1">AI Monsters</span>
-              </Link>
-            </div>
-            <div className="flex items-center space-x-4">
-              <NavLink href="/about">소개</NavLink>
-              <NavLink href="/members">부원</NavLink>
-              <NavLink href="/activities">활동</NavLink>
-              <NavLink href="/studies">스터디</NavLink>
-              <NavLink href="/recruit" active>모집</NavLink>
-              {user ? (
-                <div className="flex items-center space-x-3">
-                  {user.role === 'admin' && (
-                    <Button 
-                      as={Link}
-                      href="/admin"
-                      variant="secondary"
-                      size="sm"
-                    >
-                      🛠️ 관리자
-                    </Button>
-                  )}
-                  <span className="text-white">
-                    안녕하세요, {user.name}님
-                    {user.role === 'admin' && (
-                      <Badge variant="admin" size="sm" className="ml-1">
-                        관리자
-                      </Badge>
-                    )}
-                  </span>
-                  <Button 
-                    onClick={handleLogout}
-                    variant="ghost"
-                  >
-                    로그아웃
-                  </Button>
-                </div>
-              ) : (
-                <Button as={Link} href="/login" variant="primary">
-                  로그인
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-      </nav>
 
       {/* 메인 컨텐츠 */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

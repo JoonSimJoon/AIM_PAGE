@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { Card, Text, Title, Subtitle, Loading } from '@/components/ui'
+import { get } from '@/lib/api-client'
+import { APP_NAME } from '@/lib/config'
 
 interface AboutSection {
   id: string
@@ -43,17 +45,17 @@ export default function AboutPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    document.title = 'About - AIM: AI Monsters'
+    document.title = `About - ${APP_NAME}`
     fetchAboutData()
   }, [])
 
   const fetchAboutData = async () => {
     try {
       const [sectionsRes, activitiesRes, historyRes, contactsRes] = await Promise.all([
-        fetch('http://localhost:3001/api/content/about/sections'),
-        fetch('http://localhost:3001/api/content/about/activities'),
-        fetch('http://localhost:3001/api/content/about/history'),
-        fetch('http://localhost:3001/api/content/about/contact')
+        get('/api/content/about/sections'),
+        get('/api/content/about/activities'),
+        get('/api/content/about/history'),
+        get('/api/content/about/contact')
       ])
 
       if (sectionsRes.ok) {
@@ -109,70 +111,6 @@ export default function AboutPage() {
 
   return (
     <div className="min-h-screen bg-black">
-      <nav className="sticky top-0 z-50 bg-black border-b border-gray-800 backdrop-blur-sm bg-opacity-95">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <Link href="/" className="flex items-center space-x-3">
-                <img 
-                  src="/images/aim_logo.png" 
-                  alt="AIM 로고" 
-                  className="h-8 w-auto object-contain"
-                />
-                <span className="text-xl font-bold text-white">AIM</span>
-                <span className="text-sm text-gray-400 ml-1">AI Monsters</span>
-              </Link>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link href="/about" className="text-cyan-400 font-medium">
-                소개
-              </Link>
-              <Link href="/members" className="text-gray-300 hover:text-cyan-400 transition-colors">
-                부원
-              </Link>
-              <Link href="/activities" className="text-gray-300 hover:text-cyan-400 transition-colors">
-                활동
-              </Link>
-              <Link href="/studies" className="text-gray-300 hover:text-cyan-400 transition-colors">
-                스터디
-              </Link>
-              <Link href="/recruit" className="text-gray-300 hover:text-cyan-400 transition-colors">
-                모집
-              </Link>
-              {user ? (
-                <div className="flex items-center space-x-3">
-                  {user.role === 'admin' && (
-                    <Link
-                      href="/admin"
-                      className="bg-pink-600 text-white px-3 py-2 rounded-md hover:bg-pink-700 text-sm"
-                    >
-                      🛠️ 관리자
-                    </Link>
-                  )}
-                  <span className="text-white">
-                    안녕하세요, {user.name}님
-                    {user.role === 'admin' && (
-                      <span className="ml-1 text-xs bg-pink-600 text-white px-2 py-1 rounded">
-                        관리자
-                      </span>
-                    )}
-                  </span>
-                  <button
-                    onClick={handleLogout}
-                    className="bg-gray-700 text-white px-4 py-2 rounded-md hover:bg-gray-600 border border-gray-600"
-                  >
-                    로그아웃
-                  </button>
-                </div>
-              ) : (
-                <Link href="/login" className="bg-cyan-500 text-black px-4 py-2 rounded-md hover:bg-cyan-400 font-semibold">
-                  로그인
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
-      </nav>
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <Card className="p-8">

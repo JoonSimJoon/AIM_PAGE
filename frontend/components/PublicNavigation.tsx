@@ -1,31 +1,16 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function PublicNavigation() {
-  const [user, setUser] = useState<any>(null)
-  const router = useRouter()
-
-  useEffect(() => {
-    const storedUser = localStorage.getItem('user')
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser))
-      } catch (error) {
-        console.error('Failed to parse user data:', error)
-        localStorage.removeItem('user')
-      }
-    }
-  }, [])
+  const { user, logout, isAuthenticated, isAdmin } = useAuth()
 
   const handleLogout = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    setUser(null)
-    alert('로그아웃되었습니다.')
-    router.push('/')
+    if (confirm('로그아웃하시겠습니까?')) {
+      logout()
+      alert('로그아웃되었습니다.')
+    }
   }
 
   return (
@@ -59,33 +44,38 @@ export default function PublicNavigation() {
             <Link href="/recruit" className="text-gray-300 hover:text-cyan-400 transition-colors">
               모집
             </Link>
-            {user ? (
+            {isAuthenticated ? (
               <div className="flex items-center space-x-3">
-                {user.role === 'admin' && (
+                {isAdmin && (
                   <Link 
                     href="/admin" 
-                    className="bg-pink-600 text-white px-3 py-2 rounded-md hover:bg-pink-700 text-sm"
+                    className="bg-pink-600 text-white px-3 py-2 rounded-md hover:bg-pink-700 text-sm transition-colors"
                   >
                     🛠️ 관리자
                   </Link>
                 )}
-                <span className="text-white">
-                  안녕하세요, {user.name}님
-                  {user.role === 'admin' && (
+                <Link 
+                  href="/profile"
+                  className="text-gray-300 hover:text-cyan-400 transition-colors "
+                >
+                  <span className="group-hover:underline">
+                    프로필 수정
+                  </span>
+                  {isAdmin && (
                     <span className="ml-1 text-xs bg-pink-600 text-white px-2 py-1 rounded">
                       관리자
                     </span>
                   )}
-                </span>
+                </Link>
                 <button 
                   onClick={handleLogout}
-                  className="bg-gray-700 text-white px-4 py-2 rounded-md hover:bg-gray-600 border border-gray-600"
+                  className="bg-gray-700 text-white px-4 py-2 rounded-md hover:bg-gray-600 border border-gray-600 transition-colors"
                 >
                   로그아웃
                 </button>
               </div>
             ) : (
-              <Link href="/login" className="bg-cyan-500 text-black px-4 py-2 rounded-md hover:bg-cyan-400 font-semibold">
+              <Link href="/login" className="bg-cyan-500 text-black px-4 py-2 rounded-md hover:bg-cyan-400 font-semibold transition-colors">
                 로그인
               </Link>
             )}

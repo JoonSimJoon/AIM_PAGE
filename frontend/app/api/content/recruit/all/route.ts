@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-
-const BACKEND_URL = process.env.BACKEND_URL || 'http://aim-page-backend:3001'
+import { BACKEND_URL } from '@/lib/api-config'
 
 export async function GET(request: NextRequest) {
   try {

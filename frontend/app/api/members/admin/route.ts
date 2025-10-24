@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { BACKEND_URL } from '@/lib/api-config'
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://aim-page-backend:3001'
 
 export async function POST(request: NextRequest) {
   try {
