@@ -2,6 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { Button, Card, Text, Title, Subtitle, Loading, Modal } from '@/components/ui'
+import { DataTable } from '@/components/ui/DataTable'
+import { CardGrid } from '@/components/ui/CardGrid'
+import { ViewToggle } from '@/components/ui/ViewToggle'
+import { MemberCard } from '@/components/member/MemberCard'
 
 interface Member {
   id: string
@@ -46,6 +50,9 @@ export default function MemberManagement() {
   const [editingMember, setEditingMember] = useState<Member | null>(null)
   const [csvFile, setCsvFile] = useState<File | null>(null)
   const [csvUploading, setCsvUploading] = useState(false)
+  const [viewMode, setViewMode] = useState<'card' | 'list'>('card')
+  const [selectedMembers, setSelectedMembers] = useState<Member[]>([])
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false)
   const [formData, setFormData] = useState<EditMemberData>({
     name: '',
     email: '',
@@ -550,6 +557,193 @@ lee456@kookmin.ac.kr,이영희,영희,20231111,운영진,인공지능학부,3,2,
     link.click()
   }
 
+  // 다중 선택 관련 함수들
+  const handleSelectionChange = (selectedItems: Member[]) => {
+    setSelectedMembers(selectedItems)
+  }
+
+  const handleBulkAction = async (action: string, selectedItems: Member[]) => {
+    if (action === 'delete') {
+      setShowBulkDeleteModal(true)
+    }
+  }
+
+  const confirmBulkDelete = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      const deletePromises = selectedMembers.map(member =>
+        fetch(`http://localhost:3001/api/members/admin/${member.id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+      )
+
+      const results = await Promise.allSettled(deletePromises)
+      const successCount = results.filter(result => result.status === 'fulfilled').length
+      const failCount = results.length - successCount
+
+      if (successCount > 0) {
+        showNotification('success', '다중 삭제 완료', `${successCount}명의 멤버가 삭제되었습니다.${failCount > 0 ? ` (${failCount}명 실패)` : ''}`)
+        setSelectedMembers([])
+        fetchMembers()
+      } else {
+        showNotification('error', '삭제 실패', '선택된 멤버 삭제에 실패했습니다.')
+      }
+    } catch (error) {
+      console.error('다중 삭제 실패:', error)
+      showNotification('error', '오류 발생', '다중 삭제 중 오류가 발생했습니다.')
+    } finally {
+      setShowBulkDeleteModal(false)
+    }
+  }
+
+  const closeBulkDeleteModal = () => {
+    setShowBulkDeleteModal(false)
+  }
+
+  // 멤버 데이터를 평면화하여 정렬 가능하도록 변환
+  const flattenedMembers = members.map(member => ({
+    ...member,
+    displayName: member.profile?.displayName || member.name,
+    studentId: member.profile?.studentId || '',
+    department: member.profile?.department || '',
+    generation: member.profile?.generation || 0,
+    position: member.profile?.position || '',
+    bio: member.profile?.bio || '',
+    isPublic: member.profile?.isPublic ?? true
+  }))
+
+  // 테이블 컬럼 정의
+  const tableColumns = [
+    {
+      key: 'displayName',
+      label: '멤버',
+      sortable: true,
+      width: '200px',
+      render: (member: any) => (
+        <div className="flex items-center">
+          <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-pink-500 rounded-full flex items-center justify-center mr-3">
+            <span className="text-white font-bold text-sm">
+              {member.displayName.charAt(0)}
+            </span>
+          </div>
+          <div>
+            <div className="text-sm font-medium text-white">
+              {member.displayName}
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      key: 'email',
+      label: '이메일',
+      sortable: true
+    },
+    {
+      key: 'studentId',
+      label: '학번',
+      sortable: true,
+      render: (member: any) => (
+        <div className="text-sm text-gray-300">
+          {member.studentId || '-'}
+        </div>
+      )
+    },
+    {
+      key: 'department',
+      label: '학과',
+      sortable: true,
+      render: (member: any) => (
+        <div className="text-sm text-gray-300">
+          {member.department || '-'}
+        </div>
+      )
+    },
+    {
+      key: 'generation',
+      label: '기수',
+      sortable: true,
+      render: (member: any) => (
+        <div className="text-sm text-gray-300">
+          {member.generation ? `${member.generation}기` : '-'}
+        </div>
+      )
+    },
+    {
+      key: 'position',
+      label: '직책',
+      sortable: true,
+      render: (member: any) => (
+        <div className="text-sm text-gray-300">
+          {member.position || '-'}
+        </div>
+      )
+    },
+    {
+      key: 'role',
+      label: '권한',
+      sortable: true,
+      render: (member: any) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+          member.role === 'admin' 
+            ? 'bg-pink-600 text-white' 
+            : 'bg-gray-600 text-gray-300'
+        }`}>
+          {member.role === 'admin' ? '관리자' : '일반 멤버'}
+        </span>
+      )
+    },
+    {
+      key: 'createdAt',
+      label: '가입일',
+      sortable: true,
+      render: (member: any) => (
+        <div className="text-sm text-gray-300">
+          {new Date(member.createdAt).toLocaleDateString()}
+        </div>
+      )
+    },
+    {
+      key: 'actions',
+      label: '작업',
+      render: (member: Member) => (
+        <div className="flex gap-2">
+          <button
+            onClick={() => openEditModal(member)}
+            className="p-2 text-gray-400 hover:text-cyan-400 hover:bg-gray-600 rounded-lg transition-colors"
+            title="수정"
+          >
+            ✏️
+          </button>
+          <button
+            onClick={() => openDeleteModal(member)}
+            className="p-2 text-gray-400 hover:text-red-400 hover:bg-gray-600 rounded-lg transition-colors"
+            title="삭제"
+          >
+            🗑️
+          </button>
+        </div>
+      )
+    }
+  ]
+
+  const bulkActions = [
+    {
+      key: 'delete',
+      label: '선택 삭제',
+      icon: '🗑️',
+      variant: 'danger' as const
+    }
+  ]
+
+  const viewOptions = [
+    { key: 'card', label: '카드', icon: '📋' },
+    { key: 'list', label: '리스트', icon: '📝' }
+  ]
+
 
   if (loading) {
     return (
@@ -575,6 +769,12 @@ lee456@kookmin.ac.kr,이영희,영희,20231111,운영진,인공지능학부,3,2,
           </Subtitle>
         </div>
         <div className="flex gap-3">
+          <ViewToggle
+            currentView={viewMode}
+            views={viewOptions}
+            onViewChange={(view) => setViewMode(view as 'card' | 'list')}
+          />
+          
           <Button onClick={openCsvModal} variant="secondary">
             📄 .csv로 추가
           </Button>
@@ -584,80 +784,37 @@ lee456@kookmin.ac.kr,이영희,영희,20231111,운영진,인공지능학부,3,2,
         </div>
       </div>
 
-      {/* 멤버 카드 목록 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {members.map((member) => (
-          <Card key={member.id} className="hover:border-cyan-500 transition-all">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-cyan-400 to-pink-500 rounded-full flex items-center justify-center">
-                <span className="text-white text-lg font-bold">
-                  {(member.profile?.displayName || member.name).charAt(0)}
-                </span>
-              </div>
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => openEditModal(member)}
-                  className="text-cyan-400 hover:text-cyan-300 text-sm px-2 py-1 bg-gray-700 rounded border border-gray-600 hover:border-cyan-500 transition-colors"
-                >
-                  ✏️ 편집
-                </button>
-                <button
-                  onClick={() => openDeleteModal(member)}
-                  className="text-red-400 hover:text-red-300 text-sm px-2 py-1 bg-gray-700 rounded border border-gray-600 hover:border-red-500 transition-colors"
-                >
-                  🗑️ 삭제
-                </button>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Title level={3} className="text-white">
-                {member.profile?.displayName || member.name}
-              </Title>
-              <Text variant="secondary" size="sm">
-                {member.email}
-              </Text>
-              {member.profile?.studentId && (
-                <Text variant="muted" size="sm">
-                  학번: {member.profile.studentId}
-                </Text>
-              )}
-              {member.profile?.department && (
-                <Text variant="muted" size="sm">
-                  {member.profile.department}
-                </Text>
-              )}
-              {member.profile?.generation && (
-                <Text variant="muted" size="sm" className="font-semibold text-pink-400">
-                  {member.profile.generation}기
-                </Text>
-              )}
-              {member.profile?.year && (
-                <Text variant="muted" size="sm">
-                  {member.profile.year}
-                </Text>
-              )}
-              {member.profile?.position && (
-                <Text variant="muted" size="sm">
-                  {member.profile.position}
-                </Text>
-              )}
-              <div className="flex items-center justify-between mt-3">
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  member.role === 'admin' 
-                    ? 'bg-pink-600 text-white' 
-                    : 'bg-gray-600 text-gray-300'
-                  }`}>
-                    {member.role === 'admin' ? '관리자' : '일반 멤버'}
-                  </span>
-                <span className="text-xs text-gray-500">
-                  {new Date(member.createdAt).toLocaleDateString()}
-                  </span>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
+      {/* 멤버 목록 */}
+      {viewMode === 'card' ? (
+        <CardGrid
+          data={members}
+          keyField="id"
+          renderCard={(member) => (
+            <MemberCard
+              member={member}
+              onEdit={openEditModal}
+              onDelete={openDeleteModal}
+            />
+          )}
+          emptyMessage="등록된 멤버가 없습니다."
+          columns={{
+            default: 1,
+            md: 2,
+            lg: 3
+          }}
+        />
+      ) : (
+            <DataTable
+              data={flattenedMembers}
+              columns={tableColumns}
+              keyField="id"
+              selectable={true}
+              onSelectionChange={handleSelectionChange}
+              onBulkAction={handleBulkAction}
+              bulkActions={bulkActions}
+              emptyMessage="등록된 멤버가 없습니다."
+            />
+      )}
 
       {/* 멤버 모달 */}
       <Modal
@@ -899,6 +1056,38 @@ lee456@kookmin.ac.kr,이영희,영희,20231111,운영진,인공지능학부,3,2,
               </div>
             </div>
           </div>
+        </div>
+      </Modal>
+
+      {/* 다중 삭제 확인 모달 */}
+      <Modal
+        isOpen={showBulkDeleteModal}
+        onClose={closeBulkDeleteModal}
+        title="다중 삭제 확인"
+        onSubmit={confirmBulkDelete}
+        submitText="삭제"
+        cancelText="취소"
+        submitVariant="danger"
+      >
+        <div className="space-y-4">
+          <Text variant="secondary">
+            선택된 {selectedMembers.length}명의 멤버를 삭제하시겠습니까?
+          </Text>
+          <div className="bg-gray-700 border border-gray-600 rounded-lg p-4 max-h-40 overflow-y-auto">
+            <Text variant="muted" size="sm" className="mb-2">
+              삭제될 멤버:
+            </Text>
+            <ul className="space-y-1">
+              {selectedMembers.map((member) => (
+                <li key={member.id} className="text-sm text-gray-300">
+                  • {member.profile?.displayName || member.name} ({member.email})
+                </li>
+              ))}
+            </ul>
+          </div>
+          <Text variant="muted" size="sm" className="text-red-400">
+            ⚠️ 이 작업은 되돌릴 수 없습니다.
+          </Text>
         </div>
       </Modal>
 

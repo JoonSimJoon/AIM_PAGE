@@ -6,6 +6,9 @@ export { Text, Title, Subtitle } from './Text'
 export { Spinner, Loading } from './Spinner'
 export { FAQ } from './FAQ'
 export { Modal } from './Modal'
+export { DataTable } from './DataTable'
+export { CardGrid } from './CardGrid'
+export { ViewToggle } from './ViewToggle'
 
 // Types
 export type { default as ButtonProps } from './Button'

@@ -44,18 +44,62 @@ export default function MembersPage() {
     }
   }
 
-  // 역할별로 멤버 분류 - 운영진과 부원만
-  const executives = members.filter(member => 
-    member.profile?.position === '회장' || 
-    member.profile?.position === '부회장' ||
-    member.profile?.position?.includes('팀장') || 
-    ['기획팀장', '개발팀장', '홍보팀장'].includes(member.profile?.position || '') ||
-    member.role === 'admin'
-  )
+  // 직책별로 멤버 분류 - 회장, 부회장, 운영진은 운영진으로, 나머지는 부원으로
+  const executives = members.filter(member => {
+    const position = member.profile?.position?.toLowerCase() || ''
+    return position === '회장' || 
+           position === '부회장' || 
+           position === '운영진'
+  })
   
-  const regularMembers = members.filter(member => 
-    !executives.includes(member)
-  )
+  const regularMembers = members.filter(member => {
+    const position = member.profile?.position?.toLowerCase() || ''
+    return position !== '회장' && 
+           position !== '부회장' && 
+           position !== '운영진'
+  })
+
+  // 운영진 정렬: 회장 → 부회장 → 나머지(기수 먼저, 동기수 시 가나다)
+  const sortedExecutives = executives.sort((a, b) => {
+    const positionA = a.profile?.position?.toLowerCase() || ''
+    const positionB = b.profile?.position?.toLowerCase() || ''
+    
+    // 회장이 최우선
+    if (positionA === '회장' && positionB !== '회장') return -1
+    if (positionB === '회장' && positionA !== '회장') return 1
+    
+    // 부회장이 두 번째 우선
+    if (positionA === '부회장' && positionB !== '부회장' && positionB !== '회장') return -1
+    if (positionB === '부회장' && positionA !== '부회장' && positionA !== '회장') return 1
+    
+    // 나머지 운영진은 기수 먼저, 동기수 시 가나다 순
+    const generationA = a.profile?.generation || 0
+    const generationB = b.profile?.generation || 0
+    
+    if (generationA !== generationB) {
+      return generationA - generationB // 낮은 기수부터
+    }
+    
+    // 동기수인 경우 가나다 순
+    const nameA = (a.profile?.displayName || a.name).toLowerCase()
+    const nameB = (b.profile?.displayName || b.name).toLowerCase()
+    return nameA.localeCompare(nameB, 'ko')
+  })
+
+  // 부원 정렬: 기수 먼저, 동기수 시 가나다 순
+  const sortedRegularMembers = regularMembers.sort((a, b) => {
+    const generationA = a.profile?.generation || 0
+    const generationB = b.profile?.generation || 0
+    
+    if (generationA !== generationB) {
+      return generationA - generationB // 낮은 기수부터
+    }
+    
+    // 동기수인 경우 가나다 순
+    const nameA = (a.profile?.displayName || a.name).toLowerCase()
+    const nameB = (b.profile?.displayName || b.name).toLowerCase()
+    return nameA.localeCompare(nameB, 'ko')
+  })
 
   const MemberCard = ({ member }: { member: Member }) => (
     <div className="bg-gray-800 rounded-xl shadow-lg border border-gray-700 p-6 hover:shadow-xl hover:border-cyan-500 transition-all duration-300">
@@ -160,14 +204,14 @@ export default function MembersPage() {
         {!loading && members.length > 0 && (
           <>
             {/* 운영진 */}
-            {executives.length > 0 && (
+            {sortedExecutives.length > 0 && (
               <section className="mb-16">
                 <div className="text-center mb-8">
                   <h2 className="text-3xl font-bold text-white mb-2">운영진</h2>
                   <div className="w-24 h-1 bg-cyan-500 mx-auto rounded"></div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {executives.map(member => (
+                  {sortedExecutives.map(member => (
                     <MemberCard key={member.id} member={member} />
                   ))}
                 </div>
@@ -175,14 +219,14 @@ export default function MembersPage() {
             )}
 
             {/* 일반 부원 */}
-            {regularMembers.length > 0 && (
+            {sortedRegularMembers.length > 0 && (
               <section className="mb-16">
                 <div className="text-center mb-8">
                   <h2 className="text-3xl font-bold text-white mb-2">부원</h2>
                   <div className="w-24 h-1 bg-pink-500 mx-auto rounded"></div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {regularMembers.map(member => (
+                  {sortedRegularMembers.map(member => (
                     <MemberCard key={member.id} member={member} />
                   ))}
                 </div>
