@@ -1,21 +1,124 @@
+# ============================================
 # Dependencies
+# ============================================
 node_modules/
 */node_modules/
+.pnp
+.pnp.js
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
 
-# Environment variables
+# ============================================
+# Environment Variables & Secrets (CRITICAL!)
+# ============================================
+# 모든 환경변수 파일 (실제 값이 있는 파일)
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+!.env.example
+!.env*.example
+*.env
+*.env.local
+*.env.development.local
+*.env.test.local
+*.env.production.local
+*.env.staging
 
+# 인증 키 및 인증서 파일
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+*.cer
+*.jks
+*.keystore
+*.secret
+*.credentials
+*.token
+*.password
+
+# Supabase 관련 보안 파일
+.supabase/
+supabase/.env
+supabase/.env.local
+supabase/config.toml.local
+supabase/.temp/
+
+# ============================================
+# Build Outputs
+# ============================================
 # Next.js
 .next/
 out/
+.vercel/
+
+# TypeScript
+*.tsbuildinfo
+tsconfig.tsbuildinfo
 
 # Production builds
 dist/
 build/
+*.min.js
+*.min.css
+
+# ============================================
+# Database & Migrations
+# ============================================
+# Prisma
+backend/prisma/migrations/
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Database dump files
+*.sql
+*.dump
+*.backup
+
+# ============================================
+# Uploaded Files & User Content
+# ============================================
+# 업로드된 파일들 (민감한 사용자 데이터 포함 가능)
+backend/uploads/
+frontend/uploads/
+uploads/
+public/uploads/
+*.upload
+*.tmp
+
+# ============================================
+# Backup & Old Files
+# ============================================
+# 백업 파일들
+*.bak
+*.backup
+*_backup
+*_old
+*_old.*
+*.orig
+*.save
+*-backup.*
+*-old.*
+
+# 예: schema_old.prisma 같은 파일들
+*_old.*
+*.old.*
+
+# ============================================
+# Logs & Debug Files
+# ============================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+pnpm-debug.log*
+.pnpm-debug.log*
 
 # Runtime data
 pids
@@ -23,42 +126,161 @@ pids
 *.seed
 *.pid.lock
 
-# Coverage directory used by tools like istanbul
+# ============================================
+# Testing & Coverage
+# ============================================
 coverage/
 *.lcov
-
-# nyc test coverage
 .nyc_output
+.jest/
+coverage/
+*.coverage
 
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-lerna-debug.log*
-
-# OS generated files
+# ============================================
+# OS Generated Files
+# ============================================
+# macOS
 .DS_Store
 .DS_Store?
 ._*
 .Spotlight-V100
 .Trashes
-ehthumbs.db
-Thumbs.db
+.AppleDouble
+.LSOverride
 
-# IDE
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# ============================================
+# IDE & Editor Files
+# ============================================
+# VSCode
 .vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# IntelliJ IDEA
 .idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# Vim
 *.swp
 *.swo
+*~
+.vim/
 
-# Docker
-.dockerignore
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
 
-# Prisma
-backend/prisma/migrations/
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
 
-# Temporary folders
+# ============================================
+# Docker & Container Files
+# ============================================
+# Docker 관련 (민감한 정보 포함 가능)
+docker-compose.override.yml
+docker-compose.local.yml
+*.docker.env
+.dockerignore.local
+
+# ============================================
+# Package Manager Files
+# ============================================
+# npm
+.npm
+npm-debug.log*
+
+# yarn
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+# pnpm
+.pnpm-store/
+
+# ============================================
+# Temporary & Cache Files
+# ============================================
 tmp/
 temp/
+.tmp/
+.temp/
+*.tmp
+*.temp
+.cache/
+.parcel-cache/
+.next/cache/
+.turbo/
+
+# ============================================
+# Miscellaneous
+# ============================================
+# Lock files (선택사항 - 보통 커밋하지만 무시하려면)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Misc
+*.patch
+*.diff
+*.rej
+*.swo
+*.swp
+.history/
+.vscode-test/
+*.vsix
+
+# ============================================
+# 프로젝트 특정 파일
+# ============================================
+# 초기화 SQL 파일 (민감한 데이터 포함 가능)
+backend/prisma/init.sql.local
+backend/prisma/*.local.sql
+
+# 스크립트 실행 결과
+backend/scripts/*.output
+backend/scripts/*.result
+
+# ============================================
+# 보안 체크리스트
+# ============================================
+# 다음 항목들이 커밋되지 않았는지 확인:
+# - .env 파일 (실제 비밀번호/키 포함)
+# - AWS 인증 키 파일
+# - 데이터베이스 비밀번호
+# - JWT 시크릿 키
+# - 업로드된 사용자 파일
+# - 백업 파일들
+# ============================================
