@@ -190,15 +190,26 @@ const { user, token, isAuthenticated, isAdmin, login, logout } = useAuth()
 
 ## 배포
 
-Vercel에 배포하는 것을 권장합니다:
+### 🚀 빠른 시작
 
-```bash
-npm run build
-```
+배포와 기능 개발을 병행하려면 [빠른 시작 가이드](./QUICK_START_DEPLOYMENT.md)를 참고하세요.
+
+### 📚 배포 가이드
+
+- **[빠른 시작 가이드](./QUICK_START_DEPLOYMENT.md)** - 배포 + 기능 개발 병행 전략
+- **[배포 워크플로우](./DEPLOYMENT_WORKFLOW.md)** - Git 브랜치 전략 및 개발 프로세스
+- **[배포 가이드](./DEPLOYMENT.md)** - 상세 배포 절차 (Vercel + Supabase)
+- **[Supabase 마이그레이션](./SUPABASE_MIGRATION.md)** - Express → Edge Functions 변환
+
+### 배포 구조
+
+- **Frontend**: Vercel (Next.js)
+- **Backend**: Supabase (PostgreSQL + Edge Functions)
+- **Storage**: Supabase Storage 또는 AWS S3
 
 **환경 변수 설정:**
 ```bash
-NEXT_PUBLIC_API_URL=https://your-backend-api.com
+NEXT_PUBLIC_API_URL=https://[your-supabase-project].supabase.co
 ```
 
 ## 라이센스
