@@ -1,4 +1,4 @@
-# 스테이징 환경용 Docker Compose (Supabase 연동)
+# 스테이징 환경용 Docker Compose
 version: '3.8'
 
 services:
@@ -13,17 +13,13 @@ services:
     environment:
       NODE_ENV: staging
       PORT: 3001
-      DATABASE_URL: ${SUPABASE_DATABASE_URL}
+      DATABASE_URL: ${DATABASE_URL}
       JWT_SECRET: ${JWT_SECRET}
       FRONTEND_URL: http://localhost:3000
       AWS_REGION: ${AWS_REGION:-ap-northeast-2}
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       AWS_S3_BUCKET: ${AWS_S3_BUCKET}
-      # Supabase 설정
-      SUPABASE_URL: ${SUPABASE_URL}
-      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY}
-      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
     env_file:
       - .env
     volumes:

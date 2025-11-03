@@ -6,7 +6,7 @@
 
 - **Frontend**: Next.js 14 (App Router), TypeScript, Tailwind CSS
 - **Backend**: Express.js + TypeScript
-- **Database**: PostgreSQL (Supabase)
+- **Database**: PostgreSQL (AWS RDS 또는 로컬)
 - **Authentication**: JWT (with React Context API)
 - **Storage**: AWS S3 + CloudFront
 - **ORM**: Prisma
@@ -190,15 +190,34 @@ const { user, token, isAuthenticated, isAdmin, login, logout } = useAuth()
 
 ## 배포
 
-Vercel에 배포하는 것을 권장합니다:
+### 🚀 빠른 시작
 
-```bash
-npm run build
-```
+배포와 기능 개발을 병행하려면 [빠른 시작 가이드](./QUICK_START_DEPLOYMENT.md)를 참고하세요.
+
+### 📚 배포 가이드
+
+- **[빠른 시작 가이드](./help/QUICK_START_DEPLOYMENT.md)** - 배포 + 기능 개발 병행 전략
+- **[배포 워크플로우](./help/DEPLOYMENT_WORKFLOW.md)** - Git 브랜치 전략 및 개발 프로세스
+- **[배포 가이드](./help/DEPLOYMENT.md)** - 상세 배포 절차
+
+### 배포 구조 (권장)
+
+- **Frontend**: Vercel (Next.js) ✅
+  - Next.js 최적화, 무료 티어, 자동 배포
+- **Backend**: AWS (EC2 또는 ECS) ✅
+  - 안정적이고 확장 가능한 인프라
+- **Database**: AWS RDS (PostgreSQL) ✅
+  - 관리형 데이터베이스, 자동 백업
+- **Storage**: AWS S3 + CloudFront ✅
+  - 확장 가능한 파일 스토리지 + CDN
+
+**배포 옵션 비교**:
+- **EC2**: 중소규모 프로젝트에 적합 (Docker 사용 가능)
+- **ECS**: 대규모 프로젝트에 적합 (자동 스케일링)
 
 **환경 변수 설정:**
 ```bash
-NEXT_PUBLIC_API_URL=https://your-backend-api.com
+NEXT_PUBLIC_API_URL=https://[your-backend-api].com
 ```
 
 ## 라이센스
