@@ -597,7 +597,7 @@ AIM(AI Monsters)은 인공지능과 머신러닝에 관심 있는 학생들이 �
         isOpen={showConfirmDialog}
         onClose={cancelClose}
         title="변경사항이 있습니다"
-        size="sm"
+        maxWidth="sm"
       >
         <div className="space-y-4">
           <Text className="text-white">

@@ -160,7 +160,7 @@ export function DataTable<T extends Record<string, any>>({
                 <Button
                   key={action.key}
                   onClick={() => onBulkAction?.(action.key, selectedItems)}
-                  variant={action.variant || 'secondary'}
+                  variant={action.variant === 'danger' ? 'secondary' : (action.variant || 'secondary')}
                   size="sm"
                 >
                   {action.icon && <span className="mr-1">{action.icon}</span>}

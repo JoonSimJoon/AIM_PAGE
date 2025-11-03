@@ -1,8 +1,7 @@
 'use client'
 
 import { Card } from './Card'
-import { Title } from './Title'
-import { Text } from './Text'
+import { Title, Text } from './Text'
 
 interface CardGridProps<T> {
   data: T[]

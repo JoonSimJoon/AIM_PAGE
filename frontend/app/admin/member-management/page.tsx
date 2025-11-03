@@ -1067,7 +1067,7 @@ lee456@kookmin.ac.kr,이영희,영희,20231111,운영진,인공지능학부,3,2,
         onSubmit={confirmBulkDelete}
         submitText="삭제"
         cancelText="취소"
-        submitVariant="danger"
+        submitVariant="secondary"
       >
         <div className="space-y-4">
           <Text variant="secondary">

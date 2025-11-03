@@ -11,6 +11,8 @@ interface ModalProps {
   cancelText?: string
   showSubmitButton?: boolean
   showCancelButton?: boolean
+  submitDisabled?: boolean
+  submitVariant?: 'primary' | 'secondary' | 'ghost' | 'outline'
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl'
 }
 
@@ -24,6 +26,8 @@ export const Modal: React.FC<ModalProps> = ({
   cancelText = '취소',
   showSubmitButton = true,
   showCancelButton = true,
+  submitDisabled = false,
+  submitVariant = 'primary',
   maxWidth = '4xl'
 }) => {
   const handleBackgroundClick = (e: React.MouseEvent) => {
@@ -72,7 +76,7 @@ export const Modal: React.FC<ModalProps> = ({
                 </Button>
               )}
               {showSubmitButton && (
-                <Button type="submit" variant="primary">
+                <Button type="submit" variant={submitVariant} disabled={submitDisabled}>
                   {submitText}
                 </Button>
               )}
