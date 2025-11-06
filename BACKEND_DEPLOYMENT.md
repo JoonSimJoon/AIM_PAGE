@@ -24,15 +24,21 @@ Railway 프로젝트 → Variables 탭에서 다음 환경 변수들을 추가:
 **필수 환경 변수:**
 ```bash
 # 데이터베이스 (Railway PostgreSQL에서 자동 생성됨)
-DATABASE_URL=postgresql://user:password@host:port/railway
+# Railway 내부에서는 DATABASE_URL 사용 (내부 네트워크)
+DATABASE_URL=${{Postgres.DATABASE_URL}}
 
 # 서버 설정
 PORT=3001
 JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
 
-# 프론트엔드 URL (CORS용)
+# 프론트엔드 URL (CORS용) - 마지막 슬래시 제거
 FRONTEND_URL=https://your-vercel-app.vercel.app
 ```
+
+> **중요**: 
+> - `DATABASE_URL`은 Railway 내부 네트워크용이므로 `${{Postgres.DATABASE_URL}}` 사용
+> - `DATABASE_PUBLIC_URL`은 로컬 개발용이므로 Railway 서비스에서는 사용하지 않음
+> - `FRONTEND_URL`은 마지막 슬래시(`/`) 없이 설정
 
 **AWS S3 사용 시 (선택사항):**
 ```bash
@@ -52,12 +58,24 @@ CLOUDFRONT_DOMAIN=your-cloudfront-domain.cloudfront.net
 
 Railway 대시보드 → `aim-page-backend` 서비스 → Settings 탭에서:
 
-1. **Builder**: `Dockerfile` 선택
-2. **Dockerfile Path**: `/backend/Dockerfile` 설정
-3. **Custom Build Command**: 비워두기 (Dockerfile에서 빌드 명령 처리)
-4. **Custom Start Command**: 비워두기 (Dockerfile의 CMD 사용)
-   - 만약 설정되어 있다면 삭제하거나 비워두세요
-   - Dockerfile의 `CMD`가 실행 명령어를 지정합니다
+1. **Root Directory**: `backend` 설정
+   - 프로젝트 루트가 아닌 `backend` 디렉토리를 기준으로 설정
+2. **Builder**: `Dockerfile` 선택
+3. **Dockerfile Path**: `Dockerfile` 설정
+   - Root Directory가 `backend`이므로, `Dockerfile`만 입력 (또는 `./Dockerfile`)
+   - ❌ `/backend/Dockerfile` (잘못된 경로)
+   - ✅ `Dockerfile` (올바른 경로)
+4. **Custom Build Command**: 비워두기 (Dockerfile에서 빌드 명령 처리)
+5. **Custom Start Command**: 두 가지 옵션
+   
+   **옵션 1: 비워두기 (권장)**
+   - Dockerfile의 `CMD ["node", "dist/src/index.js"]`가 실행됩니다
+   - 이 방법이 작동하지 않으면 옵션 2 사용
+   
+   **옵션 2: 명시적으로 설정**
+   - `npm start` 입력
+   - 또는 `node dist/src/index.js` 입력
+   - Dockerfile의 CMD를 덮어씁니다
 
 ### 5. Dockerfile 수정 확인
 
@@ -172,7 +190,48 @@ Railway에서 파일이 영구적으로 저장되도록 Volume 추가:
 > **참고**: Volume 없이도 작동하지만, 서비스 재배포 시 파일이 삭제될 수 있습니다.  
 > Volume은 유료 서비스이므로, 초기에는 Volume 없이 시작하고 필요 시 추가하는 것을 권장합니다.
 
-### 8. 배포 확인
+### 8. 배포 확인 및 문제 해결
+
+#### "No deploys for this service" 에러 해결
+
+이 메시지가 나타나면 배포가 시도되지 않았거나 실패한 것입니다.
+
+**1단계: GitHub 연결 확인**
+- Railway → `aim-page-backend` 서비스 → Settings → "Source"
+- GitHub 저장소가 연결되어 있는지 확인
+- 브랜치가 올바르게 설정되어 있는지 확인 (보통 `main` 또는 `master`)
+
+**2단계: 배포 트리거 확인**
+- Railway는 GitHub에 푸시할 때 자동으로 배포를 시도합니다
+- 최근에 GitHub에 푸시했는지 확인
+- 수동 배포: "Deployments" 탭 → "Redeploy" 버튼 클릭
+
+**3단계: Settings 확인**
+- Railway → `aim-page-backend` 서비스 → Settings
+- **Root Directory**: `backend` 설정 확인
+- **Builder**: `Dockerfile` 선택 확인
+- **Dockerfile Path**: `Dockerfile` 설정 확인
+- **Custom Build Command**: 비워두기
+- **Custom Start Command**: 비워두거나 `npm start` 설정
+
+**4단계: 빌드 로그 확인**
+- Railway → `aim-page-backend` 서비스 → "Deployments" 탭
+- 배포 시도가 있다면 클릭하여 빌드 로그 확인
+- TypeScript 컴파일 에러, 의존성 설치 에러 등 확인
+
+**5단계: 환경 변수 확인**
+- Railway → `aim-page-backend` 서비스 → Variables
+- 필수 변수 확인:
+  - `DATABASE_URL=${{Postgres.DATABASE_URL}}`
+  - `FRONTEND_URL=https://aim-page-frontend.vercel.app`
+  - `JWT_SECRET=AIM4EVER`
+  - `PORT=3001`
+
+**6단계: 수동 배포 시도**
+- "Deployments" 탭 → "Redeploy" 버튼 클릭
+- 또는 Settings → "Redeploy" 버튼 클릭
+
+#### 배포 성공 후 확인
 
 1. **Railway 대시보드에서 서비스 상태 확인**
    - 서비스가 "Active" 상태인지 확인
@@ -195,7 +254,44 @@ Railway에서 파일이 영구적으로 저장되도록 Volume 추가:
    - 환경 변수 설정 확인 (특히 `DATABASE_URL`, `JWT_SECRET`)
    - 포트 설정 확인 (`PORT=3001`)
 
-5. **파일 업로드 테스트**
+5. **문제 해결: "Connection reset by peer" 에러**
+
+   이 에러는 **PostgreSQL 로그**입니다. 백엔드 서비스가 실행되지 않아서 발생합니다.
+   
+   **확인 사항:**
+   
+   a. **백엔드 서비스 로그 확인** (중요!)
+      - Railway 대시보드 → `aim-page-backend` 서비스 (PostgreSQL이 아님!)
+      - "View Logs" 탭 확인
+      - 다음 메시지가 있는지 확인:
+        - `🚀 Backend server running on port 3001` (정상)
+        - 빌드 에러 메시지
+        - `Cannot find module` 에러
+        - `DATABASE_URL` 관련 에러
+   
+   b. **환경 변수 확인**
+      - Railway → `aim-page-backend` 서비스 → Variables
+      - `DATABASE_URL`이 설정되어 있는지 확인
+      - `JWT_SECRET`이 설정되어 있는지 확인
+      - `PORT=3001`이 설정되어 있는지 확인
+   
+   c. **빌드 로그 확인**
+      - Railway → `aim-page-backend` 서비스 → "Deployments" 탭
+      - 최근 배포의 빌드 로그 확인
+      - TypeScript 컴파일 에러가 있는지 확인
+      - `dist/src/index.js` 파일이 생성되었는지 확인
+   
+   d. **Custom Start Command 확인**
+      - Settings → Custom Start Command
+      - `npm start` 또는 `node dist/src/index.js` 설정 확인
+
+6. **문제 해결: Custom Start Command가 작동하지 않는 경우**
+   - Railway 로그에서 에러 메시지 확인
+   - 빌드가 성공했는지 확인 (`dist/src/index.js` 파일이 생성되었는지)
+   - Custom Start Command에 `npm start` 명시적으로 입력
+   - 또는 `node dist/src/index.js` 직접 입력
+
+7. **파일 업로드 테스트**
    - `/api/upload/file` 엔드포인트 확인 (인증 필요)
 
 ---

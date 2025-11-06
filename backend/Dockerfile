@@ -8,7 +8,8 @@ WORKDIR /app
 
 # 의존성 설치
 COPY package*.json ./
-RUN npm ci
+# 모노레포에서는 package-lock.json이 없을 수 있으므로 npm install 사용
+RUN npm install
 
 # 소스 코드 복사 및 Prisma 클라이언트 생성
 COPY . .
@@ -24,7 +25,8 @@ WORKDIR /app
 
 # 프로덕션 의존성만 설치
 COPY package*.json ./
-RUN npm ci --only=production && npm cache clean --force
+# 모노레포에서는 package-lock.json이 없을 수 있으므로 npm install 사용
+RUN npm install --only=production && npm cache clean --force
 
 # 빌드 결과물 복사
 COPY --from=builder /app/dist ./dist
