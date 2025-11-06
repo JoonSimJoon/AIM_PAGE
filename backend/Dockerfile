@@ -33,4 +33,4 @@ RUN npx prisma generate
 
 EXPOSE 3001
 
-CMD ["node", "dist/backend/src/index.js"]
+CMD ["node", "dist/src/index.js"]

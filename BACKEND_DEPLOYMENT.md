@@ -48,7 +48,18 @@ CLOUDFRONT_DOMAIN=your-cloudfront-domain.cloudfront.net
 
 > **참고**: 현재 프로젝트는 로컬 파일 스토리지를 사용하므로, AWS 설정 없이도 작동합니다. 파일은 Railway 서버 내부에 저장됩니다.
 
-### 4. Dockerfile 수정 확인
+### 4. Railway 빌드 설정
+
+Railway 대시보드 → `aim-page-backend` 서비스 → Settings 탭에서:
+
+1. **Builder**: `Dockerfile` 선택
+2. **Dockerfile Path**: `/backend/Dockerfile` 설정
+3. **Custom Build Command**: 비워두기 (Dockerfile에서 빌드 명령 처리)
+4. **Custom Start Command**: 비워두기 (Dockerfile의 CMD 사용)
+   - 만약 설정되어 있다면 삭제하거나 비워두세요
+   - Dockerfile의 `CMD`가 실행 명령어를 지정합니다
+
+### 5. Dockerfile 수정 확인
 
 프로덕션 빌드를 위해 `backend/Dockerfile`이 올바르게 설정되어 있는지 확인:
 
@@ -90,7 +101,9 @@ EXPOSE 3001
 CMD ["node", "dist/src/index.js"]
 ```
 
-### 5. 데이터베이스 마이그레이션
+> **중요**: Railway Settings에서 `Custom Start Command`가 설정되어 있다면 **비워두세요**. Dockerfile의 `CMD`가 실행 명령어를 지정합니다.
+
+### 6. 데이터베이스 마이그레이션
 
 Railway 배포 후, 데이터베이스 마이그레이션 실행:
 
@@ -146,7 +159,7 @@ npx prisma db push
 > - Railway 서비스 내에서는 `DATABASE_URL` 사용
 > - 로컬 개발/마이그레이션 시에는 `DATABASE_PUBLIC_URL` 사용
 
-### 6. 파일 저장소 설정 (선택사항)
+### 7. 파일 저장소 설정 (선택사항)
 
 Railway에서 파일이 영구적으로 저장되도록 Volume 추가:
 
@@ -159,7 +172,7 @@ Railway에서 파일이 영구적으로 저장되도록 Volume 추가:
 > **참고**: Volume 없이도 작동하지만, 서비스 재배포 시 파일이 삭제될 수 있습니다.  
 > Volume은 유료 서비스이므로, 초기에는 Volume 없이 시작하고 필요 시 추가하는 것을 권장합니다.
 
-### 7. 배포 확인
+### 8. 배포 확인
 
 1. **Railway 대시보드에서 서비스 상태 확인**
    - 서비스가 "Active" 상태인지 확인
