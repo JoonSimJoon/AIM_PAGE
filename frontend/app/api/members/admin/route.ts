@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { BACKEND_URL } from '@/lib/api-config'
 
+export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {

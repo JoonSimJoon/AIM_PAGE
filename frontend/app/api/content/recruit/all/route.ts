@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { BACKEND_URL } from '@/lib/api-config'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     console.log('Next.js API Route: 모든 모집 공고 조회 시작 (관리자용)')

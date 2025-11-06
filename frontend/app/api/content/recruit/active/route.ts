@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { BACKEND_URL } from '@/lib/api-config'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     const backendEndpoint = `${BACKEND_URL}/api/content/recruit/active`
