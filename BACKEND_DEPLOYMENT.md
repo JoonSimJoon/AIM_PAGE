@@ -69,12 +69,12 @@ Railway 대시보드 → `aim-page-backend` 서비스 → Settings 탭에서:
 5. **Custom Start Command**: 두 가지 옵션
    
    **옵션 1: 비워두기 (권장)**
-   - Dockerfile의 `CMD ["node", "dist/backend/src/index.js"]`가 실행됩니다
+   - Dockerfile의 `CMD ["node", "dist/index.js"]`가 실행됩니다
    - 이 방법이 작동하지 않으면 옵션 2 사용
    
    **옵션 2: 명시적으로 설정**
    - `npm start` 입력
-   - 또는 `node dist/backend/src/index.js` 입력
+   - 또는 `node dist/index.js` 입력
    - Dockerfile의 CMD를 덮어씁니다
 
 ### 5. Dockerfile 수정 확인
@@ -116,12 +116,12 @@ RUN npx prisma generate
 
 EXPOSE 3001
 
-CMD ["node", "dist/backend/src/index.js"]
+CMD ["node", "dist/index.js"]
 ```
 
 > **중요**: 
 > - Railway Settings에서 `Custom Start Command`가 설정되어 있다면 **비워두세요**. Dockerfile의 `CMD`가 실행 명령어를 지정합니다.
-> - 빌드 출력 경로: `dist/backend/src/index.js` (tsconfig.json의 include 설정으로 인해 `backend` 디렉토리가 포함됨)
+> - 빌드 출력 경로: `dist/index.js` (tsconfig.json의 `baseUrl: "./src"` 설정으로 인해 `src` 디렉토리가 제거됨)
 
 ### 6. 데이터베이스 마이그레이션
 
@@ -281,17 +281,17 @@ Railway에서 파일이 영구적으로 저장되도록 Volume 추가:
       - Railway → `aim-page-backend` 서비스 → "Deployments" 탭
       - 최근 배포의 빌드 로그 확인
       - TypeScript 컴파일 에러가 있는지 확인
-      - `dist/backend/src/index.js` 파일이 생성되었는지 확인
+      - `dist/index.js` 파일이 생성되었는지 확인
    
    d. **Custom Start Command 확인**
       - Settings → Custom Start Command
-      - `npm start` 또는 `node dist/backend/src/index.js` 설정 확인
+      - `npm start` 또는 `node dist/index.js` 설정 확인
 
 6. **문제 해결: Custom Start Command가 작동하지 않는 경우**
    - Railway 로그에서 에러 메시지 확인
-   - 빌드가 성공했는지 확인 (`dist/backend/src/index.js` 파일이 생성되었는지)
+   - 빌드가 성공했는지 확인 (`dist/index.js` 파일이 생성되었는지)
    - Custom Start Command에 `npm start` 명시적으로 입력
-   - 또는 `node dist/backend/src/index.js` 직접 입력
+   - 또는 `node dist/index.js` 직접 입력
 
 7. **파일 업로드 테스트**
    - `/api/upload/file` 엔드포인트 확인 (인증 필요)

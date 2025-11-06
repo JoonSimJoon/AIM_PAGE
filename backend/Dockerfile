@@ -16,6 +16,11 @@ COPY . .
 RUN npx prisma generate
 RUN npm run build
 
+# 빌드 결과 확인 (디버깅용)
+RUN ls -la dist/ || echo "dist directory not found"
+RUN find dist -name "index.js" -type f || echo "index.js not found"
+RUN cat dist/index.js | head -5 || echo "Cannot read dist/index.js"
+
 # 프로덕션 이미지
 FROM node:18-alpine AS production
 
@@ -35,4 +40,4 @@ RUN npx prisma generate
 
 EXPOSE 3001
 
-CMD ["node", "dist/backend/src/index.js"]
+CMD ["node", "dist/index.js"]
